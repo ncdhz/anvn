@@ -1,0 +1,8 @@
+__pycache__
+*.json
+.vscode
+test*
+build
+dist
+*.egg-info
+*.psd
