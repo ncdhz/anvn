@@ -1,9 +1,0 @@
-<!DOCTYPE RCC>
-<RCC version="1.0">
-    <qresource>
-        <file alias="logo">resources/icons/logo.png</file>
-    </qresource>
-    <qresource>
-        <file alias="model_load">resources/icons/model_load.png</file>
-    </qresource>
-</RCC>

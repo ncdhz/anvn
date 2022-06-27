@@ -1,0 +1,96 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource>
+        <file alias="logo">resources/icons/logo.png</file>
+    </qresource>
+    <qresource>
+        <file alias="select_model">resources/icons/select_model.png</file>
+    </qresource>
+    <qresource>
+        <file alias="close">resources/icons/close.png</file>
+    </qresource>
+    <qresource>
+        <file alias="close_cover">resources/icons/close_cover.png</file>
+    </qresource>
+    <qresource>
+        <file alias="maximize">resources/icons/maximize.png</file>
+    </qresource>
+    <qresource>
+        <file alias="maximize_cover">resources/icons/maximize_cover.png</file>
+    </qresource>
+    <qresource>
+        <file alias="recovery">resources/icons/recovery.png</file>
+    </qresource>
+    <qresource>
+        <file alias="recovery_cover">resources/icons/recovery_cover.png</file>
+    </qresource>
+    <qresource>
+        <file alias="add">resources/icons/add.png</file>
+    </qresource>
+    <qresource>
+        <file alias="clear">resources/icons/clear.png</file>
+    </qresource>
+    <qresource>
+        <file alias="run">resources/icons/run.png</file>
+    </qresource>
+    <qresource>
+        <file alias="remove">resources/icons/remove.png</file>
+    </qresource>
+    <qresource>
+        <file alias="layer">resources/icons/layer.png</file>
+    </qresource>
+    <qresource>
+        <file alias="head">resources/icons/head.png</file>
+    </qresource>
+    <qresource>
+        <file alias="table">resources/icons/table.png</file>
+    </qresource>
+    <qresource>
+        <file alias="ok">resources/icons/ok.png</file>
+    </qresource>
+    <qresource>
+        <file alias="cancel">resources/icons/cancel.png</file>
+    </qresource>
+    <qresource>
+        <file alias="forward">resources/icons/forward.png</file>
+    </qresource>
+    <qresource>
+        <file alias="revoke">resources/icons/revoke.png</file>
+    </qresource>
+    <qresource>
+        <file alias="down_disabled">resources/icons/down_disabled.png</file>
+    </qresource>
+    <qresource>
+        <file alias="fuse_columns">resources/icons/fuse_columns.png</file>
+    </qresource>
+    <qresource>
+        <file alias="fuse_rows">resources/icons/fuse_rows.png</file>
+    </qresource>
+    <qresource>
+        <file alias="up">resources/icons/up.png</file>
+    </qresource>
+    <qresource>
+        <file alias="down">resources/icons/down.png</file>
+    </qresource>
+    <qresource>
+        <file alias="heatmap">resources/icons/heatmap.png</file>
+    </qresource>
+    <qresource>
+        <file alias="setting">resources/icons/setting.png</file>
+    </qresource>
+    <qresource>
+        <file alias="apply">resources/icons/apply.png</file>
+    </qresource>
+    <qresource>
+        <file alias="show">resources/icons/show.png</file>
+    </qresource>
+    <qresource>
+        <file alias="badge_close">resources/icons/badge_close.png</file>
+    </qresource>
+    <qresource>
+        <file alias="madd">resources/icons/madd.png</file>
+    </qresource>
+    <qresource>
+        <file alias="folder">resources/icons/folder.png</file>
+    </qresource>
+</RCC>
