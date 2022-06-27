@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
-from PyQt5.QtGui import QDesktopServices, QIcon
+from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtGui import QIcon
 from resources import *
 from menu_tool import AnvnMenu, AnvnToolBar
 from widget import AnvnTabWidget

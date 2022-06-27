@@ -6,4 +6,19 @@
     <qresource>
         <file alias="model_load">resources/icons/model_load.png</file>
     </qresource>
+    <qresource>
+        <file alias="delete_gray">resources/icons/delete_gray.png</file>
+    </qresource>
+    <qresource>
+        <file alias="delete_red">resources/icons/delete_red.png</file>
+    </qresource>
+    <qresource>
+        <file alias="add">resources/icons/add.png</file>
+    </qresource>
+    <qresource>
+        <file alias="clear">resources/icons/clear.png</file>
+    </qresource>
+    <qresource>
+        <file alias="run">resources/icons/run.png</file>
+    </qresource>
 </RCC>
