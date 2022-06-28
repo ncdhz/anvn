@@ -1,11 +1,11 @@
-from PyQt5.QtWidgets import QHBoxLayout, QDockWidget, QMainWindow, QPushButton
+from PyQt5.QtWidgets import QHBoxLayout, QDockWidget, QPushButton, QComboBox
 from PyQt5.QtGui import  QIcon
 from PyQt5.QtCore import Qt, QSize, QEvent
 from resources import *
 
-class AnvnQDockWidget(QDockWidget):
+class AnvnDockWidget(QDockWidget):
     def __init__(self, title, parent=None):
-        super(AnvnQDockWidget, self).__init__(title, parent)
+        super(AnvnDockWidget, self).__init__(title, parent)
         self.setStyleSheet('''
             QDockWidget {
                 color: rgb(226, 192, 141);
@@ -24,7 +24,6 @@ class AnvnButton(QPushButton):
         self.clicked.connect(callback)
         return self
     
-
 class AnvnDeleteButton(AnvnButton):
     def __init__(self, w, h, is_red=False):
         super(AnvnDeleteButton, self).__init__()
@@ -49,6 +48,15 @@ class AnvnDeleteButton(AnvnButton):
 class AnvnOpButton(AnvnButton):
     def __init__(self, color, text, icon_name, layout: QHBoxLayout, w = 20, h = 20, spacing = 20, alignment=Qt.AlignmentFlag.AlignRight):
         super(AnvnOpButton, self).__init__()
+        self.__set_style(color)
+        self.color = color
+        self.setText(text)
+        self.setIcon(QIcon(f':/{icon_name}'))
+        self.setIconSize(QSize(w, h))
+        layout.addSpacing(spacing)
+        layout.addWidget(self, alignment=alignment)
+
+    def __set_style(self, color):
         self.setStyleSheet('''
             QPushButton {
                 background: #ffffff;
@@ -64,10 +72,18 @@ class AnvnOpButton(AnvnButton):
                 background: #cdcdcd;
             }
         ''')
-        self.setText(text)
-        self.setIcon(QIcon(f':/{icon_name}'))
-        self.setIconSize(QSize(w, h))
-        layout.addSpacing(spacing)
-        layout.addWidget(self, alignment=alignment)
 
+    def setDisabled(self, a0: bool):
+        if a0:
+            self.__set_style('rgb(219, 219, 219)')
+        else:
+            self.__set_style(self.color)
+        super().setDisabled(a0)
+
+class AnvnComboBox(QComboBox):
+    def __init__(self) -> None:
+        super().__init__()
     
+    def __call__(self, callback):
+        self.clicked.connect(callback)
+        return self

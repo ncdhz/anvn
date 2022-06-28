@@ -21,4 +21,7 @@
     <qresource>
         <file alias="run">resources/icons/run.png</file>
     </qresource>
+    <qresource>
+        <file alias="remove">resources/icons/remove.png</file>
+    </qresource>
 </RCC>
