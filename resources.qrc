@@ -24,4 +24,19 @@
     <qresource>
         <file alias="remove">resources/icons/remove.png</file>
     </qresource>
+    <qresource>
+        <file alias="drop_down">resources/icons/drop_down.png</file>
+    </qresource>
+    <qresource>
+        <file alias="data_num">resources/icons/data_num.png</file>
+    </qresource>
+    <qresource>
+        <file alias="layer">resources/icons/layer.png</file>
+    </qresource>
+    <qresource>
+        <file alias="head">resources/icons/head.png</file>
+    </qresource>
+    <qresource>
+        <file alias="table">resources/icons/table.png</file>
+    </qresource>
 </RCC>

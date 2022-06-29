@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from widget_utils import AnvnDeleteButton, AnvnDockWidget, AnvnOpButton
 
 class AnvnDataInputWidget(AnvnDockWidget):
+
     def __init__(self, title='Data Input', callback_func=None, parent=None):
         super(AnvnDataInputWidget, self).__init__(title, parent)
         self.setStatusTip(title)
@@ -14,12 +15,12 @@ class AnvnDataInputWidget(AnvnDockWidget):
         self.data_list.setStyleSheet('''
             QListWidget {border-style: none;}
         ''')
-        self.main_layout.addWidget(self.data_list)
-        self.main_widget.setLayout(self.main_layout)
-        self.setWidget(self.main_widget)
         self.add_item2list()
+        self.main_layout.addWidget(self.data_list)
         op_layout = self.__init_op_button()
         self.run = AnvnOpButton('#1296db', 'Run', 'run', op_layout)(self.run_func)
+        self.main_widget.setLayout(self.main_layout)
+        self.setWidget(self.main_widget)
         self.callback_func = callback_func
 
     def run_func(self):
@@ -40,6 +41,7 @@ class AnvnDataInputWidget(AnvnDockWidget):
         layout.addStretch(0)
         AnvnOpButton('#d81e06', 'Clear', 'clear', layout)(self.clear_data_func)
         AnvnOpButton('#eeb174', 'Add', 'add', layout)(self.add_data_func)
+        
         layout_widget.setLayout(layout)
         self.main_layout.addWidget(layout_widget)
         return layout

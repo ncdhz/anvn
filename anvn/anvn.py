@@ -8,7 +8,7 @@ from widget import AnvnTabWidget
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super(MainWindow, self).__init__()
-        self.setMinimumSize(1100, 600)
+        self.setMinimumSize(1100, 900)
         self.setWindowIcon(QIcon(':/logo'))
         self.anvn_tab_widget = AnvnTabWidget(self)
         self.anvn_menu = AnvnMenu(self, self.anvn_tab_widget)

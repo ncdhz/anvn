@@ -1,4 +1,3 @@
-from typing import List
 import torch
 from transformers import AutoModel, AutoTokenizer, PreTrainedTokenizerBase
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -24,26 +23,102 @@ class AnvnPreModel(QThread):
     def get_tokenizer(self):
         return self.token
 
+    def get_model(self):
+        return self.model
+
     def signal_connect(self, callback_func):
         self.signal.connect(callback_func)
+
+class _AnvnDataset(Dataset):
+    def __init__(self, data) -> None:
+        super().__init__()
+        self.data = data
+    def __getitem__(self, index):
+        return self.data[index]
+    def __len__(self):
+        return len(self.data)
+
+class AnvnDataset(QThread):
+
+    signal = pyqtSignal(int)
+    success = -1
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.data_list = None
+        self.tokenizer = None
+        self.data = None
+
+    def set_data_list(self, data_list):
+        self.data_list = data_list
+
+    def set_tokenizer(self, tokenizer):
+        self.tokenizer = tokenizer
     
-    def data_process(self, data_list, batch_size=2, num_workers=1):
+    def run(self):
         data = []
-        for dl in data_list:
-            t_data = self.token(dl)
-            t_data[self.original_text] = self.token.batch_decode(t_data[self.input_ids])
+        for i, dl in enumerate(self.data_list):
+            t_data = self.tokenizer(dl)
+            t_data[AnvnPreModel.original_text] = self.tokenizer.batch_decode(t_data[AnvnPreModel.input_ids])
             data.append(t_data)
-        dataset = AnvnDataset(data=data)
-        return DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=AnvnDataCollator(tokenizer=self.token))
+            self.signal.emit(i + 1)
+        self.signal.emit(self.success)
+        self.data = data
+
+    def get_dataset(self):
+        return _AnvnDataset(self.data)
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __len__(self):
+        return len(self.data_list)
     
-    def model_run(self, data_loader):
+    def signal_connect(self, callback_func):
+        self.signal.connect(callback_func)
+
+
+class AnvnModelRun(QThread):
+    success = -1
+    signal = pyqtSignal(int)
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.model = None
+        self.data_loader = None
+        
+        self.outputs = None
+        self.all_ots = None
+        self.all_iis = None
+
+    def get_outputs(self):
+        return self.outputs
+    
+    def get_all_ots(self):
+        return self.all_ots
+    
+    def get_all_iis(self):
+        return self.all_iis
+
+    def set_data_loader(self, dataset: Dataset, tokenizer, batch_size = 1, num_workers = 1):
+        self.data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=AnvnDataCollator(tokenizer=tokenizer))
+
+    def set_model(self, model):
+        self.model = model
+
+    def __len__(self):
+        if self.data_loader == None:
+            return 0
+        return len(self.data_loader)
+
+    def run(self):
         self.model.eval()
         outputs = None
         keys = None
         all_ots = []
         all_iis = []
         with torch.no_grad():
-            for dl, ots, iis in data_loader:
+            for ri, (dl, ots, iis) in enumerate(self.data_loader):
                 all_ots.extend(ots)
                 all_iis.extend(iis)
                 output = self.model(**dl, output_hidden_states=True, output_attentions=True)
@@ -74,23 +149,20 @@ class AnvnPreModel(QThread):
                                 outputs[key].append(key_out[i,:len_ot].cpu().tolist())
                         else:
                             outputs[key].extend(key_out.cpu().tolist())
-        return outputs,  all_ots, all_iis
+                self.signal.emit(ri + 1)
+        self.outputs = outputs
+        self.all_ots = all_ots
+        self.all_iis = all_iis
+        self.signal.emit(self.success)
 
-
-class AnvnDataset(Dataset):
-        def __init__(self, data) -> None:
-            super().__init__()
-            self.data = data
-        
-        def __getitem__(self, index):
-            return self.data[index]
-
-        def __len__(self):
-            return len(self.data)
+    def signal_connect(self, callback_func):
+        self.signal.connect(callback_func)
 
 @dataclass
 class AnvnDataCollator:
+    
     tokenizer: PreTrainedTokenizerBase
+
     def __call__(self, features):
         original_texts = []
         input_ids = []
