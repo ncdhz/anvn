@@ -129,7 +129,7 @@ class AnvnComboBox(QComboBox):
         ''')
 
     def __call__(self, callback):
-        self.currentIndexChanged.connect(callback)
+        self.currentTextChanged.connect(callback)
         return self
 
 
