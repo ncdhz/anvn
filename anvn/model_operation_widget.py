@@ -1,15 +1,130 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTableWidget, QLabel, QTableWidgetItem, QDialog
-from widget_utils import AnvnDockWidget, AnvnOpButton, AnvnComboBox, AnvnProgressBar
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTableWidget, QLabel, QTableWidgetItem, QLineEdit, QTextEdit
+from widget_utils import AnvnDockWidget, AnvnOpButton, AnvnComboBox, AnvnProgressBar, AnvnDialog, AnvnInformationWidget, AnvnFrame
 from PyQt5.QtCore import Qt
 from anvn_utils import AnvnUtils
 
-class AnvnMODialog(QDialog):
-    def __init__(self, title, parent=None) -> None:
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setModal(True)
-        self.setWindowFlags(Qt.Window)
+class AnvnDODialog(AnvnDialog):
+    def __init__(self, title, help, input, ok_callback, result_message, h=470, number = 500, parent=None) -> None:
+        super().__init__(title, h=h, parent=parent)
+        self.main_layout = QVBoxLayout(self)
+        self.__set_style()
+        self.setLayout(self.main_layout)
+        if help is not None:
+            self.__add_help(help)
+            self.main_layout.addStretch(0)
+        if input is not None:
+            self.__add_input(input)
+            self.main_layout.addStretch(0)
+        if ok_callback is not None:
+            self.__add_op_button(ok_callback)
+        self.result_message = result_message
+        self.data = []
+        self.number = number
 
+    def get_data(self):
+        return self.data
+
+    def __add_help(self, help):
+        information = AnvnInformationWidget('Help:')
+        self.main_layout.addWidget(information)
+        information.add_information(help, '#eeb174')
+        information.add_stretch(0)
+    
+    def __data_analysis(self, str_data):
+        '''
+        return: 0: success, 1: error, 2: array out of bounds, 3: no data
+        '''
+        if str_data == '':
+            return 3
+        data = set()
+        try:
+            sds = str_data.split(',')
+            for sd in sds:
+                if '-' in sd:
+                    s = sd.split('-')
+                    if len(s) != 2:
+                        return 1
+                    for i in range(int(s[0]), int(s[1]) + 1):
+                        if i >= self.number:
+                            return 2
+                        data.add(i)
+                else:
+                    if int(sd) >= self.number:
+                        return 2 
+                    data.add(int(sd))
+            pass
+        except Exception:
+            return 1
+        if len(data) == 0:
+            return 3
+
+        data = list(data)
+        data.sort()
+        self.data = data
+        return 0
+
+    def __text_changed_func(self, lint_edit, text_edit):
+        def tcf():
+            data_analysis_result = self.__data_analysis(lint_edit.text())
+            result_text = ''
+            if data_analysis_result == 0:
+                result_text = ','.join(str(i) for i in self.data)
+                text_edit.setStyleSheet('''
+                    color: #8a8a8a;
+                    border-radius: 3px;
+                ''')
+            else:
+                result_text = self.result_message[data_analysis_result - 1]
+                text_edit.setStyleSheet('''
+                    color: #d81e06;
+                    border-radius: 3px;
+                ''')
+            text_edit.setText(result_text)
+        return tcf
+
+    def __add_input(self, input):
+        information = AnvnInformationWidget(input)
+        lint_edit = QLineEdit()
+        lint_edit.setObjectName('line_edit')
+        information.add_widget(lint_edit)
+        information.add_information('Result:', '#17abe3')
+        result = QTextEdit()
+        result.setMaximumHeight(70)
+        result.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        result.setReadOnly(True)
+        result.setObjectName('result')
+        lint_edit.textChanged.connect(self.__text_changed_func(lint_edit, result))
+
+        information.add_widget(result)
+        self.main_layout.addWidget(information)
+        information.add_stretch(0)
+
+    def __add_op_button(self, callback_func=None):
+        frame = AnvnFrame(self)
+        layout = QHBoxLayout()
+        layout.addStretch(0)
+        AnvnOpButton('#1296db', 'OK', 'ok', layout)(callback_func)
+        AnvnOpButton('#eeb174', 'Cancel', 'cancel', layout)(lambda : {
+            self.close()
+        })
+        frame.setLayout(layout)
+        self.main_layout.addWidget(frame)
+
+    def __set_style(self):
+        self.setStyleSheet('''
+            #line_edit {
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                padding: 3px;
+                color: #8a8a8a;
+            }
+            #result {
+                color: #8a8a8a;
+                border-radius: 3px;
+            }
+        ''')
+
+    
 class AnvnTableWidget(QTableWidget):
     def __init__(self):
         super(AnvnTableWidget, self).__init__()
@@ -306,12 +421,26 @@ class AnvnMMOWidget(QWidget):
             self.main_layout.addWidget(table_mangement)
         self.tables.append(table_mangement)
         self.current_table += 1
+
+    def __data_num_func(self):
+        AnvnDODialog(f'Select data', help='Please enter the position of the data [0-n) separated by commas, or use [i-j] to select the data, n represents the number of pieces of data, i represents the starting data position, and j represents the ending data position.', input=f'Select data [0, {len(self.all_iis) - 1}]:', result_message=['Data analysis error.', f'The selected data is out of range [0, {len(self.all_iis) - 1}].', 'Data is empty.'], ok_callback=lambda : {}).show()
+
+    def __layer_func(self):
+        AnvnDODialog(f'Select layer', help='Please enter the position of the layer [0-n) separated by commas, or use [i-j] to select the layer, n represents the number of layers, i represents the starting layer position, and j represents the ending layer position.', input=f'Select layer [0, {len(self.outputs[self.key][0]) - 1}]:', result_message=['Layer analysis error.', f'The selected layer is out of range [0, {len(self.outputs[self.key][0]) - 1}].', 'Layer is empty.'], ok_callback=lambda : {}).show()
+
+    def __head_func(self):
+        AnvnDODialog(f'Select head', help='Please enter the position of the head [0-n) separated by commas, or use [i-j] to select the head, n represents the number of heads, i represents the starting head position, and j represents the ending head position.', input=f'Select head [0, {len(self.outputs[self.key][0][0]) - 1}]:', result_message=['Head analysis error.', f'The selected head is out of range [0, {len(self.outputs[self.key][0][0]) - 1}].', 'Head is empty.'], ok_callback=lambda : {}).show()
+
     def __init_data_choice(self):
         data_choice_layout = QHBoxLayout()
-
-        AnvnOpButton('#eeb174', '0', 'data_num', data_choice_layout,
+        data_num = AnvnOpButton('#eeb174', '0', 'data_num', data_choice_layout,
                      alignment=Qt.AlignmentFlag.AlignLeft)
-
+        
+        if len(self.all_ots) == 1:
+            data_num.setDisabled(True)
+        else:
+            data_num(self.__data_num_func)
+        
         keys_combo_box = AnvnComboBox(layout=data_choice_layout)
         keys_combo_box.addItems(self.output_keys)
         if self.attentions in self.output_keys:
@@ -323,10 +452,10 @@ class AnvnMMOWidget(QWidget):
         layer_but = None
         if self.attentions in self.output_keys or self.hidden_states in self.output_keys:
             layer_but = AnvnOpButton(
-                '#c8db8c', '--', 'layer', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)
+                '#c8db8c', '--', 'layer', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__layer_func)
         if self.attentions in self.output_keys:
             head_but = AnvnOpButton(
-                '#7dc5eb', '--', 'head', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)
+                '#7dc5eb', '--', 'head', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__head_func)
 
         self.main_layout.addLayout(data_choice_layout)
         data_choice_layout.addStretch(0)

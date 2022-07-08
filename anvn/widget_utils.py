@@ -1,5 +1,4 @@
-from ctypes import alignment
-from PyQt5.QtWidgets import QHBoxLayout, QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar
+from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar, QDialog, QFrame, QVBoxLayout, QLabel
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QSize, QEvent
 from resources import *
@@ -38,7 +37,17 @@ class AnvnDeleteButton(AnvnButton):
         self.setIcon(
             self.sent_delete_button_red_icon if is_red else self.sent_delete_button_gray_icon)
         self.setIconSize(QSize(w, h))
-
+        self.__set_style()
+        
+    def __set_style(self):
+        self.setStyleSheet('''
+            QPushButton {
+                border: none;
+                margin: 8px;
+                padding: 0px;
+            }
+        ''')
+        
     def enterEvent(self, a0: QEvent) -> None:
         self.setIcon(
             self.sent_delete_button_red_icon if not self.is_red else self.sent_delete_button_gray_icon)
@@ -48,7 +57,6 @@ class AnvnDeleteButton(AnvnButton):
         self.setIcon(
             self.sent_delete_button_red_icon if self.is_red else self.sent_delete_button_gray_icon)
         return super().leaveEvent(a0)
-
 
 class AnvnOpButton(AnvnButton):
     def __init__(self, color, text, icon_name, layout: QBoxLayout, w=20, h=20, spacing=20, alignment=Qt.AlignmentFlag.AlignRight):
@@ -87,7 +95,6 @@ class AnvnOpButton(AnvnButton):
         else:
             self.__set_style(self.color)
         super().setDisabled(a0)
-
 
 class AnvnComboBox(QComboBox):
     def __init__(self, layout: QBoxLayout, alignment=Qt.AlignmentFlag.AlignLeft, spacing=20) -> None:
@@ -132,7 +139,6 @@ class AnvnComboBox(QComboBox):
         self.currentTextChanged.connect(callback)
         return self
 
-
 class AnvnProgressBar(QProgressBar):
     def __init__(self, layout: QBoxLayout, color, minimum=0, maximum=100, alignment=Qt.AlignmentFlag.AlignTop) -> None:
         super(AnvnProgressBar, self).__init__()
@@ -158,3 +164,56 @@ class AnvnProgressBar(QProgressBar):
                 background: ''' + self.color + ''';
             }
         ''')
+
+class AnvnDialog(QDialog):
+    def __init__(self, title, w=600, h=600, parent=None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setModal(True)
+        self.setFixedSize(QSize(w, h))
+        self.setWindowFlags(Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.Dialog)
+
+class AnvnFrame(QFrame):
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.setObjectName('anvn_frame')
+        self.__set_style()
+
+    def __set_style(self):
+        self.setStyleSheet('''
+            QFrame#anvn_frame {
+                background: #ffffff;
+                border: 1px solid #dbdbdb;
+                border-radius: 10px;
+                padding: 5px 15px;
+            }
+        ''')
+
+class AnvnInformationWidget(AnvnFrame):
+    def __init__(self, title) -> None:
+        super().__init__()
+        self.main_layout = QVBoxLayout()
+        self.title = QLabel(title)
+        self.title.setWordWrap(True)
+        self.main_layout.addWidget(self.title) 
+        self.setLayout(self.main_layout)
+        self.__set_style()
+
+    def __set_style(self):
+        self.title.setStyleSheet('''color: #17abe3;''')
+
+    def add_widget(self, widget):
+        self.main_layout.addSpacing(10)
+        self.main_layout.addWidget(widget)
+        return self
+    
+    def add_stretch(self, stretch):
+        self.main_layout.addStretch(stretch)
+
+    def add_information(self, information, color='#8a8a8a'):
+        self.main_layout.addSpacing(10)
+        label = QLabel(information)
+        label.setWordWrap(True)
+        self.main_layout.addWidget(label)
+        label.setStyleSheet(f'color: {color}')
+        return label

@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMainWindow, QTabWidget, QMainWindow
 from PyQt5.QtCore import Qt
 from data_input_widget import AnvnDataInputWidget
 from data_visualization_widget import AnvnDataVisualizationWidget
-from model_operation_widget import AnvnModelOperationWidget, AnvnMODialog
+from model_operation_widget import AnvnModelOperationWidget, AnvnDODialog
 from model_utils import AnvnPreModel, AnvnDataset, AnvnModelRun
 
 class AnvnTabWidget(QTabWidget):
@@ -17,12 +17,10 @@ class AnvnTabWidget(QTabWidget):
         self.removeTab(index)
 
     def add_widget(self, model_path='bert-base-uncased'):
-        # tab_name = model_path
-        # if len(tab_name) > 20:
-        #     tab_name = model_path[:8] + '...' + model_path[-8:]
-        # self.addTab(AnvnWidget(self.main_window, model_path), tab_name)
-
-        AnvnMODialog('Model Operation', self.main_window).show()
+        tab_name = model_path
+        if len(tab_name) > 20:
+            tab_name = model_path[:8] + '...' + model_path[-8:]
+        self.addTab(AnvnWidget(self.main_window, model_path), tab_name)
 
 class AnvnWidget(QMainWindow):
     

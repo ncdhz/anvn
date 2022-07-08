@@ -39,4 +39,10 @@
     <qresource>
         <file alias="table">resources/icons/table.png</file>
     </qresource>
+    <qresource>
+        <file alias="ok">resources/icons/ok.png</file>
+    </qresource>
+    <qresource>
+        <file alias="cancel">resources/icons/cancel.png</file>
+    </qresource>
 </RCC>

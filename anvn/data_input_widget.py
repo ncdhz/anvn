@@ -82,11 +82,6 @@ class AnvnDataInputWidget(AnvnDockWidget):
                 border-radius: 0px;
                 margin: 0px 8px 15px 8px;
             }
-            QPushButton {
-                border: none;
-                margin: 8px;
-                padding: 0px;
-            }
         ''')
         data_v_layout = QVBoxLayout()
 
