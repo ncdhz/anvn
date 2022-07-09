@@ -144,10 +144,10 @@ class AnvnModelRun(QThread):
                             len_ot = len(ot)
                             if len(key_out.shape) == 4:
                                 outputs[key].append(
-                                    key_out[i, :, :, :len_ot].cpu().tolist())
+                                    key_out[i, :, :len_ot].cpu().tolist())
                             else:
                                 outputs[key].append(
-                                    key_out[i, :, :, :len_ot, : len_ot].cpu().tolist())
+                                    key_out[i, :, :, :len_ot, :len_ot].cpu().tolist())
                     else:
                         if len(key_out.shape) == 3:
                             for i, ot in enumerate(ots):

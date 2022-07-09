@@ -45,4 +45,10 @@
     <qresource>
         <file alias="cancel">resources/icons/cancel.png</file>
     </qresource>
+    <qresource>
+        <file alias="forward">resources/icons/forward.png</file>
+    </qresource>
+    <qresource>
+        <file alias="revoke">resources/icons/revoke.png</file>
+    </qresource>
 </RCC>

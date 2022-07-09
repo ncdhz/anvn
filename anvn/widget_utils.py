@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar, QDialog, QFrame, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar, QDialog, QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QSize, QEvent
 from resources import *
@@ -217,3 +217,38 @@ class AnvnInformationWidget(AnvnFrame):
         self.main_layout.addWidget(label)
         label.setStyleSheet(f'color: {color}')
         return label
+
+class AnvnTableWidget(QTableWidget):
+    def __init__(self):
+        super(AnvnTableWidget, self).__init__()
+        self.__set_style()
+        self.model_ = self.selectionModel()
+
+    def __set_style(self):
+        self.setStyleSheet('''
+            QTableWidget {
+                border-style: none;
+            }
+            QHeaderView {
+                background: #ffffff;
+            }
+            QHeaderView::section {
+                border: 1px solid #dbdbdb;
+                background: #e6e6e6;
+            }
+
+        ''')
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.verticalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    def get_selected(self):
+        rows = self.model_.selectedRows()
+        columns = self.model_.selectedColumns()
+        return [r.row() for r in rows], [c.column() for c in columns]
+
+    def set_items(self, data, digit):
+        for i in range(len(data)):
+            for j in range(len(data[i])):
+                twi = QTableWidgetItem(str(round(data[i][j], digit)))
+                twi.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.setItem(i, j, twi)

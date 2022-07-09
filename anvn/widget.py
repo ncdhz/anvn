@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMainWindow, QTabWidget, QMainWindow
 from PyQt5.QtCore import Qt
 from data_input_widget import AnvnDataInputWidget
 from data_visualization_widget import AnvnDataVisualizationWidget
-from model_operation_widget import AnvnModelOperationWidget, AnvnDODialog
+from model_operation_widget import AnvnModelOperationWidget
 from model_utils import AnvnPreModel, AnvnDataset, AnvnModelRun
 
 class AnvnTabWidget(QTabWidget):

@@ -1,25 +1,30 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTableWidget, QLabel, QTableWidgetItem, QLineEdit, QTextEdit
-from widget_utils import AnvnDockWidget, AnvnOpButton, AnvnComboBox, AnvnProgressBar, AnvnDialog, AnvnInformationWidget, AnvnFrame
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QTextEdit, QStackedWidget
+from widget_utils import AnvnDockWidget, AnvnOpButton, AnvnComboBox, AnvnProgressBar, AnvnDialog, AnvnInformationWidget, AnvnFrame, AnvnTableWidget
 from PyQt5.QtCore import Qt
 from anvn_utils import AnvnUtils
 
+
 class AnvnDODialog(AnvnDialog):
-    def __init__(self, title, help, input, ok_callback, result_message, h=470, number = 500, parent=None) -> None:
+    def __init__(self, title, help, input, ok_callback, result_message, number, data, h=470, parent=None) -> None:
         super().__init__(title, h=h, parent=parent)
+        self.data = data
+        self.result_message = result_message
+        self.number = number
+        self.ok_callback = ok_callback
+
         self.main_layout = QVBoxLayout(self)
         self.__set_style()
         self.setLayout(self.main_layout)
-        if help is not None:
-            self.__add_help(help)
-            self.main_layout.addStretch(0)
-        if input is not None:
-            self.__add_input(input)
-            self.main_layout.addStretch(0)
-        if ok_callback is not None:
-            self.__add_op_button(ok_callback)
-        self.result_message = result_message
-        self.data = []
-        self.number = number
+        self.__add_help(help)
+        self.main_layout.addStretch(0)
+        lint_edit, result_view = self.__add_input(input)
+        self.main_layout.addStretch(0)
+        self.ok = self.__add_op_button()
+
+        lint_edit.textChanged.connect(
+            self.__text_changed_func(lint_edit, result_view))
+        lint_edit.setText(AnvnUtils.list2str(',', self.data))
+        self.ok.setDisabled(True)
 
     def get_data(self):
         return self.data
@@ -29,7 +34,7 @@ class AnvnDODialog(AnvnDialog):
         self.main_layout.addWidget(information)
         information.add_information(help, '#eeb174')
         information.add_stretch(0)
-    
+
     def __data_analysis(self, str_data):
         '''
         return: 0: success, 1: error, 2: array out of bounds, 3: no data
@@ -50,7 +55,7 @@ class AnvnDODialog(AnvnDialog):
                         data.add(i)
                 else:
                     if int(sd) >= self.number:
-                        return 2 
+                        return 2
                     data.add(int(sd))
             pass
         except Exception:
@@ -73,12 +78,14 @@ class AnvnDODialog(AnvnDialog):
                     color: #8a8a8a;
                     border-radius: 3px;
                 ''')
+                self.ok.setDisabled(False)
             else:
                 result_text = self.result_message[data_analysis_result - 1]
                 text_edit.setStyleSheet('''
                     color: #d81e06;
                     border-radius: 3px;
                 ''')
+                self.ok.setDisabled(True)
             text_edit.setText(result_text)
         return tcf
 
@@ -88,27 +95,35 @@ class AnvnDODialog(AnvnDialog):
         lint_edit.setObjectName('line_edit')
         information.add_widget(lint_edit)
         information.add_information('Result:', '#17abe3')
-        result = QTextEdit()
-        result.setMaximumHeight(70)
-        result.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        result.setReadOnly(True)
-        result.setObjectName('result')
-        lint_edit.textChanged.connect(self.__text_changed_func(lint_edit, result))
+        lint_edit.setPlaceholderText('e.g. 1,2,7-10,12')
+        result_view = QTextEdit()
+        result_view.setMaximumHeight(70)
+        result_view.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        result_view.setReadOnly(True)
+        result_view.setObjectName('result')
 
-        information.add_widget(result)
+        information.add_widget(result_view)
         self.main_layout.addWidget(information)
         information.add_stretch(0)
+        return lint_edit, result_view
 
-    def __add_op_button(self, callback_func=None):
+    def __ok_func(self):
+        self.ok_callback(self.data)
+        self.close()
+
+    def __add_op_button(self):
         frame = AnvnFrame(self)
         layout = QHBoxLayout()
         layout.addStretch(0)
-        AnvnOpButton('#1296db', 'OK', 'ok', layout)(callback_func)
-        AnvnOpButton('#eeb174', 'Cancel', 'cancel', layout)(lambda : {
+        ok = AnvnOpButton('#1296db', 'OK', 'ok', layout)(self.__ok_func)
+        AnvnOpButton('#eeb174', 'Cancel', 'cancel', layout)(lambda: {
             self.close()
         })
+        ok.setDisabled(True)
         frame.setLayout(layout)
         self.main_layout.addWidget(frame)
+        return ok
 
     def __set_style(self):
         self.setStyleSheet('''
@@ -124,143 +139,189 @@ class AnvnDODialog(AnvnDialog):
             }
         ''')
 
-    
-class AnvnTableWidget(QTableWidget):
-    def __init__(self):
-        super(AnvnTableWidget, self).__init__()
-        self.__set_style()
-        self.model_ = self.selectionModel()
-
-    def __set_style(self):
-        self.setStyleSheet('''
-            QTableWidget {
-                border-style: none;
-            }
-            QHeaderView {
-                background: #ffffff;
-            }
-            QHeaderView::section {
-                border: 1px solid #dbdbdb;
-                background: #e6e6e6;
-            }
-        ''')
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.verticalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
-        # self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-
-    def get_selected(self):
-        rows = self.model_.selectedRows()
-        columns = self.model_.selectedColumns()
-        return [r.row() for r in rows], [c.column() for c in columns]
-    
-    def set_items(self, data):
-        for i in range(len(data)):
-            for j in range(len(data[i])):
-                self.setItem(i, j, QTableWidgetItem(str(data[i][j])))
-
 
 class AnvnAttentionTableWidget(AnvnTableWidget):
     def __init__(self):
         super(AnvnAttentionTableWidget, self).__init__()
 
-    def add_data2table(self, data, ot):
+    def add_data2table(self, data, ot, digit=5):
         self.clear()
         self.setRowCount(len(data))
         self.setColumnCount(len(data[0]))
         self.setHorizontalHeaderLabels(ot)
         self.setVerticalHeaderLabels(ot)
-        self.set_items(data)
+        self.set_items(data, digit)
 
-class AnvnAttentionTableManagement(QWidget):
-    def __init__(self, data, ots, iis, data_num, layers, heads):
-        super(AnvnAttentionTableManagement, self).__init__()
+
+class AnvnTableManagement(QWidget):
+    def __init__(self, key, digit=5) -> None:
+        super().__init__()
         self.main_layout = QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.main_layout)
+        self.current_index = 0
+        self.current_data = []
+        self.key = key
+        self.digit = digit
+        self.data_num = None
+        self.layers = None
+        self.heads = None
+        self.table_widget = None
+        self.remove_but = self.__init_table_op()
+
+    def remove_func(self):
+        pass
+ 
+    def __init_table_op(self):
+        layout = QHBoxLayout()
+
+        remove_but = AnvnOpButton('#d81e06', 'Remove', 'remove', layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.remove_func)
+        remove_but.setDisabled(True)
+
+        layout.addStretch(0)
+        self.main_layout.addLayout(layout)
+        return remove_but
+    
+    def set_digit(self, digit):
+        self.digit = digit
+        self.add_data2table()
+
+    def get_digit(self):
+        return self.digit
+
+    def get_key(self):
+        return self.key
+
+    def get_data_num(self):
+        return self.data_num
+
+    def get_layers(self):
+        return self.layers
+
+    def get_heads(self):
+        return self.heads
+
+    def is_start(self):
+        return self.current_index == 0
+
+    def is_end(self):
+        return self.current_index == len(self.current_data) - 1
+
+    def revoke(self):
+        if self.is_start():
+            return False
+        self.current_index -= 1
+        self.add_data2table()
+        return True
+
+    def forward(self):
+        if self.is_end():
+            return False
+        self.current_index += 1
+        self.add_data2table()
+        return True
+
+    def add_data2table(self):
+        pass
+    
+    def table_clicked(self):
+        print('table_clicked')
+
+    def delete_index_after(self):
+        self.current_data = self.current_data[:self.current_index + 1]
+
+
+class AnvnAttentionTableManagement(AnvnTableManagement):
+    def __init__(self, data, ots, iis, data_num, layers, heads, key, digit):
+        super(AnvnAttentionTableManagement, self).__init__(key, digit)
         self.data_num = data_num
         self.layers = layers
         self.heads = heads
         self.data = data
         self.ots = ots
         self.iis = iis
-        self.current_index = 0
-        self.current_data = [(data, ots, iis, 0, 0, 0)]
+        self.current_data.append((data, ots, iis, 0, 0, 0))
 
-        self.attention_table_widget = AnvnAttentionTableWidget()
-        self.main_layout.addWidget(self.attention_table_widget)
+        self.table_widget = AnvnAttentionTableWidget()
+        self.main_layout.addWidget(self.table_widget)
 
         self.add_data2table()
-        self.setLayout(self.main_layout)
 
     def add_data2table(self):
         data, ots, _, di, li, hi = self.current_data[self.current_index]
-        self.attention_table_widget.add_data2table(data[di][li][hi], ots[di])
+        self.table_widget.add_data2table(
+            data[di][li][hi], ots[di], self.digit)
+
 
 class AnvnStateTableWidget(AnvnTableWidget):
     def __init__(self):
         super(AnvnStateTableWidget, self).__init__()
 
-    def add_data2table(self, data, ot):
+    def add_data2table(self, data, ot, digit):
         self.clear()
         self.setRowCount(len(data))
         self.setColumnCount(len(data[0]))
-        self.setHorizontalHeaderLabels([str(i) for i in range(1, len(data[0]) + 1)])
+        self.setHorizontalHeaderLabels(
+            [str(i) for i in range(1, len(data[0]) + 1)])
         self.setVerticalHeaderLabels(ot)
-        self.set_items(data)
+        self.set_items(data, digit)
 
-class AnvnStateTableManagement(QWidget):
-    def __init__(self, data, ots, iis, data_num, layers=None):
-        super(AnvnStateTableManagement, self).__init__()
-        self.main_layout = QVBoxLayout()
+
+class AnvnStateTableManagement(AnvnTableManagement):
+    def __init__(self, data, ots, iis, data_num, layers, key, digit):
+        super(AnvnStateTableManagement, self).__init__(key, digit)
         self.data_num = data_num
         self.layers = layers
         self.data = data
         self.ots = ots
         self.iis = iis
-        self.current_index = 0
         if self.layers is None:
-            self.current_data = [(data, ots, iis, 0)]
+            self.current_data.append((data, ots, iis, 0))
         else:
-            self.current_data = [(data, ots, iis, 0, 0)]
-        self.state_table_widget = AnvnStateTableWidget()
-        self.main_layout.addWidget(self.state_table_widget)
+            self.current_data.append((data, ots, iis, 0, 0))
+        self.table_widget = AnvnStateTableWidget()
+        self.main_layout.addWidget(self.table_widget)
         self.add_data2table()
-        self.setLayout(self.main_layout)
-    
+
     def add_data2table(self):
         if self.layers is None:
             data, ots, _, di = self.current_data[self.current_index]
-            self.state_table_widget.add_data2table(data[di], ots[di])
+            self.table_widget.add_data2table(
+                data[di], ots[di], self.digit)
         else:
             data, ots, _, di, li = self.current_data[self.current_index]
-            self.state_table_widget.add_data2table(data[di][li], ots[di])
+            self.table_widget.add_data2table(
+                data[di][li], ots[di], self.digit)
+
 
 class AnvnPoolerTableWidget(AnvnTableWidget):
     def __init__(self):
         super(AnvnPoolerTableWidget, self).__init__()
 
-    def add_data2table(self, data, data_num):
+    def add_data2table(self, data, data_num, digit):
         self.clear()
         self.setRowCount(len(data))
         self.setColumnCount(len(data[0]))
-        self.setHorizontalHeaderLabels([str(i) for i in range(1, len(data[0]) + 1)])
+        self.setHorizontalHeaderLabels(
+            [str(i) for i in range(1, len(data[0]) + 1)])
         self.setVerticalHeaderLabels([str(i) for i in data_num])
-        self.set_items(data)
+        self.set_items(data, digit)
 
-class AnvnPoolerTableManagement(QWidget):
-    def __init__(self, data, data_num):
-        super(AnvnPoolerTableManagement, self).__init__()
-        self.main_layout = QVBoxLayout()
+
+class AnvnPoolerTableManagement(AnvnTableManagement):
+    def __init__(self, data, data_num, key, digit):
+        super(AnvnPoolerTableManagement, self).__init__(key, digit)
         self.data_num = data_num
         self.data = data
-        self.current_index = 0
-        self.current_data = [(data, data_num)]
-        self.pooler_table_widget = AnvnPoolerTableWidget()
-        self.main_layout.addWidget(self.pooler_table_widget)
+        self.current_data.append((data, data_num))
+        self.table_widget = AnvnPoolerTableWidget()
+        self.main_layout.addWidget(self.table_widget)
         self.add_data2table()
-        self.setLayout(self.main_layout)
 
     def add_data2table(self):
         data, data_num = self.current_data[self.current_index]
-        self.pooler_table_widget.add_data2table(data, data_num)
+        self.table_widget.add_data2table(data, data_num, self.digit)
+
 
 class AnvnLMOWidget(QWidget):
     def __init__(self) -> None:
@@ -361,22 +422,29 @@ class AnvnMMOWidget(QWidget):
         self.attentions = attentions
 
         self.current_data_num = [0]
-        self.current_layers = [0]
-        self.current_heads = [0]
+        self.current_layers = None
+        self.current_heads = None
 
         self.tokenizer = tokenizer
+        self.digit = 5
 
         self.main_layout = QVBoxLayout()
-        self.layer_but, self.head_but = self.__init_data_choice()
-        self.__data_choice_changed()
 
-        self.data_table_widgets = []
-
-        self.tables = []
-        self.current_table = -1
-        self.__add_tabel_widget()
-        self.setLayout(self.main_layout)
+        self.data_num_but, self.key_but, self.layer_but, self.head_but, self.digit_but, self.revoke_but, self.forward_but = self.__init_data_choice()
         
+        self.setLayout(self.main_layout)
+
+        self.table_main = QStackedWidget()
+        self.main_layout.addSpacing(15)
+        self.main_layout.addWidget(self.table_main)
+        self.current_table = -1
+
+        self.main_layout.addStretch(0)
+        # add key connect, init table
+        self.key_but(self.__key_changed_func)
+        if self.attentions in self.output_keys:
+            self.key_but.setCurrentText(self.attentions)
+
     def __get_table_data(self):
         data, ots, iis = [], [], []
         output = self.outputs[self.key]
@@ -397,71 +465,149 @@ class AnvnMMOWidget(QWidget):
                         dataj.append(datak)
                 data.append(dataj)
         return data, ots, iis
-    
+
     def __add_tabel_widget(self):
-        if len(self.tables) > 0:
-            self.main_layout.removeWidget(self.tables[self.current_table])
-        
+        for i in range(self.table_main.count() - 1, self.current_table, -1):
+            self.table_main.removeWidget(self.table_main.widget(i))
+
+        if self.current_table >= 0:
+            tabel = self.table_main.currentWidget()
+            tabel.delete_index_after()
+
         data, ots, iis = self.__get_table_data()
         if self.key == self.attentions:
             table_mangement = AnvnAttentionTableManagement(
-                data, ots, iis, self.current_data_num, self.current_layers, self.current_heads)
-            self.main_layout.addWidget(table_mangement)
+                data, ots, iis, self.current_data_num, self.current_layers, self.current_heads, key=self.key, digit=self.digit)
         elif self.key == self.hidden_states:
             table_mangement = AnvnStateTableManagement(
-                data, ots, iis, self.current_data_num, self.current_layers)
-            self.main_layout.addWidget(table_mangement)
+                data, ots, iis, self.current_data_num, self.current_layers, key=self.key, digit=self.digit)
         elif self.key == self.last_hidden_state:
             table_mangement = AnvnStateTableManagement(
-                data, ots, iis, self.current_data_num)
-            self.main_layout.addWidget(table_mangement)
+                data, ots, iis, self.current_data_num, key=self.key, layers=None, digit=self.digit)
         else:
             table_mangement = AnvnPoolerTableManagement(
-                data, self.current_data_num)
-            self.main_layout.addWidget(table_mangement)
-        self.tables.append(table_mangement)
+                data, self.current_data_num, key=self.key, digit=self.digit)
+        self.table_main.addWidget(table_mangement)
         self.current_table += 1
+        self.table_main.setCurrentIndex(self.current_table)
+        self.__revoke_forward_disable()
+
+    def __set_data_num(self, data):
+        self.current_data_num = data
+        self.__add_tabel_widget()
+        self.__data_choice_changed()
+
+    def __set_layers(self, layers):
+        self.current_layers = layers
+        self.__add_tabel_widget()
+        self.__data_choice_changed()
+
+    def __set_heads(self, heads):
+        self.current_heads = heads
+        self.__add_tabel_widget()
+        self.__data_choice_changed()
 
     def __data_num_func(self):
-        AnvnDODialog(f'Select data', help='Please enter the position of the data [0-n) separated by commas, or use [i-j] to select the data, n represents the number of pieces of data, i represents the starting data position, and j represents the ending data position.', input=f'Select data [0, {len(self.all_iis) - 1}]:', result_message=['Data analysis error.', f'The selected data is out of range [0, {len(self.all_iis) - 1}].', 'Data is empty.'], ok_callback=lambda : {}).show()
+        AnvnDODialog(f'Select data', help='Please enter the position of the data [0-n) separated by commas, or use [i-j] to select the data, n represents the number of pieces of data, i represents the starting data position, and j represents the ending data position.',
+                     input=f'Select data [0, {len(self.all_iis) - 1}]:', result_message=['Data analysis error.', f'The selected data is out of range [0, {len(self.all_iis) - 1}].', 'Data is empty.'], ok_callback=self.__set_data_num, number=len(self.all_iis), data=self.current_data_num).show()
 
-    def __layer_func(self):
-        AnvnDODialog(f'Select layer', help='Please enter the position of the layer [0-n) separated by commas, or use [i-j] to select the layer, n represents the number of layers, i represents the starting layer position, and j represents the ending layer position.', input=f'Select layer [0, {len(self.outputs[self.key][0]) - 1}]:', result_message=['Layer analysis error.', f'The selected layer is out of range [0, {len(self.outputs[self.key][0]) - 1}].', 'Layer is empty.'], ok_callback=lambda : {}).show()
+    def __layers_func(self):
+        AnvnDODialog(f'Select layer', help='Please enter the position of the layer [0-n) separated by commas, or use [i-j] to select the layer, n represents the number of layers, i represents the starting layer position, and j represents the ending layer position.', input=f'Select layer [0, {len(self.outputs[self.key][0]) - 1}]:', result_message=[
+                     'Layer analysis error.', f'The selected layer is out of range [0, {len(self.outputs[self.key][0]) - 1}].', 'Layer is empty.'], ok_callback=self.__set_layers, number=len(self.outputs[self.key][0]), data=self.current_layers).show()
 
-    def __head_func(self):
-        AnvnDODialog(f'Select head', help='Please enter the position of the head [0-n) separated by commas, or use [i-j] to select the head, n represents the number of heads, i represents the starting head position, and j represents the ending head position.', input=f'Select head [0, {len(self.outputs[self.key][0][0]) - 1}]:', result_message=['Head analysis error.', f'The selected head is out of range [0, {len(self.outputs[self.key][0][0]) - 1}].', 'Head is empty.'], ok_callback=lambda : {}).show()
+    def __heads_func(self):
+        AnvnDODialog(f'Select head', help='Please enter the position of the head [0-n) separated by commas, or use [i-j] to select the head, n represents the number of heads, i represents the starting head position, and j represents the ending head position.', input=f'Select head [0, {len(self.outputs[self.key][0][0]) - 1}]:', result_message=[
+                     'Head analysis error.', f'The selected head is out of range [0, {len(self.outputs[self.key][0][0]) - 1}].', 'Head is empty.'], ok_callback=self.__set_heads, number=len(self.outputs[self.key][0][0]), data=self.current_heads).show()
 
     def __init_data_choice(self):
         data_choice_layout = QHBoxLayout()
         data_num = AnvnOpButton('#eeb174', '0', 'data_num', data_choice_layout,
-                     alignment=Qt.AlignmentFlag.AlignLeft)
-        
+                                alignment=Qt.AlignmentFlag.AlignLeft)
+        data_num.setToolTip('Select data')
         if len(self.all_ots) == 1:
             data_num.setDisabled(True)
         else:
             data_num(self.__data_num_func)
-        
+
         keys_combo_box = AnvnComboBox(layout=data_choice_layout)
         keys_combo_box.addItems(self.output_keys)
-        if self.attentions in self.output_keys:
-            keys_combo_box.setCurrentText(self.attentions)
 
-        self.key = keys_combo_box.currentText()
-        keys_combo_box(self.key_changed_func)
         head_but = None
         layer_but = None
         if self.attentions in self.output_keys or self.hidden_states in self.output_keys:
             layer_but = AnvnOpButton(
-                '#c8db8c', '--', 'layer', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__layer_func)
+                '#c8db8c', '--', 'layer', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__layers_func)
+            layer_but.setToolTip('Select layer')
         if self.attentions in self.output_keys:
             head_but = AnvnOpButton(
-                '#7dc5eb', '--', 'head', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__head_func)
+                '#7dc5eb', '--', 'head', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__heads_func)
+            head_but.setToolTip('Select head')
+
+        decimal_digit = AnvnComboBox(layout=data_choice_layout)
+        decimal_digit.setToolTip('Select decimal digit')
+        decimal_digit.addItems(['1', '2', '3', '4', '5', '6', '7', '8', '9'])
+        decimal_digit.setCurrentText(str(self.digit))
+        decimal_digit.currentTextChanged.connect(self.__decimal_digit_func)
+
+        revoke_but = AnvnOpButton('#7dc5eb', 'Revoke', 'revoke', data_choice_layout,
+                                  alignment=Qt.AlignmentFlag.AlignLeft)(self.__revoke_func)
+        revoke_but.setDisabled(True)
+        forward_but = AnvnOpButton('#7dc5eb', 'Forward', 'forward', data_choice_layout,
+                                   alignment=Qt.AlignmentFlag.AlignLeft)(self.__forward_func)
+        forward_but.setDisabled(True)
 
         self.main_layout.addLayout(data_choice_layout)
         data_choice_layout.addStretch(0)
-        return layer_but, head_but
+        return data_num, keys_combo_box,  layer_but, head_but, decimal_digit, revoke_but, forward_but
+
+    def __decimal_digit_func(self, text):
+        if self.digit != int(text):
+            self.digit = int(text)
+            table = self.table_main.currentWidget()
+            table.set_digit(self.digit)
+
+    def __revoke_forward_disable(self):
+        table = self.table_main.currentWidget()
+        if table.is_start() and self.current_table == 0:
+            self.revoke_but.setDisabled(True)
+        else:
+            self.revoke_but.setDisabled(False)
+        if table.is_end() and self.current_table == self.table_main.count() - 1:
+            self.forward_but.setDisabled(True)
+        else:
+            self.forward_but.setDisabled(False)
+
+    def __revoke_func(self):
+        table = self.table_main.currentWidget()
+        if not table.revoke():
+            self.current_table -= 1
+            self.table_main.setCurrentIndex(self.current_table)
+        self.__update_current_data()
+        self.__revoke_forward_disable()
+
+    def __update_current_data(self):
+        table = self.table_main.currentWidget()
+        self.current_data_num = table.get_data_num()
+        self.current_layers = table.get_layers()
+        self.current_heads = table.get_heads()
+        self.key = table.get_key()
+        self.digit = table.get_digit()
+        self.__data_choice_changed()
+
+    def __forward_func(self):
+        table = self.table_main.currentWidget()
+        if not table.forward():
+            self.current_table += 1
+            self.table_main.setCurrentIndex(self.current_table)
+
+        self.__update_current_data()
+        self.__revoke_forward_disable()
 
     def __data_choice_changed(self):
+        self.data_num_but.setText(AnvnUtils.l2s_mto(
+            ',', self.current_data_num, 10))
+        self.key_but.setCurrentText(self.key)
+        self.digit_but.setCurrentText(str(self.digit))
         if self.key == self.attentions or self.key == self.hidden_states:
             self.layer_but.setText(AnvnUtils.l2s_mto(
                 ',', self.current_layers, 10))
@@ -481,10 +627,17 @@ class AnvnMMOWidget(QWidget):
             self.head_but.setText('--')
             self.head_but.setDisabled(True)
 
-    def key_changed_func(self, text):
-        self.key = text
-        self.__data_choice_changed()
-        self.__add_tabel_widget()
+    def __layers_heads_init(self):
+        self.current_heads = [0]
+        self.current_layers = [0]
+
+    def __key_changed_func(self, text):
+        if self.key != text:
+            self.key = text
+            self.__layers_heads_init()
+            self.__data_choice_changed()
+            self.__add_tabel_widget()
+
 
 class AnvnModelOperationWidget(AnvnDockWidget):
     def __init__(self, title='Model Operation', parent=None):
