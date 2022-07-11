@@ -51,4 +51,7 @@
     <qresource>
         <file alias="revoke">resources/icons/revoke.png</file>
     </qresource>
+    <qresource>
+        <file alias="drop_down_disabled">resources/icons/drop_down_disabled.png</file>
+    </qresource>
 </RCC>

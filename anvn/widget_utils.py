@@ -107,14 +107,14 @@ class AnvnComboBox(QComboBox):
         if alignment != Qt.AlignmentFlag.AlignRight:
             layout.addSpacing(spacing)
 
-    def __set_style(self):
+    def __set_style(self, disabled=False):
         self.setStyleSheet('''
             QComboBox {
                 background: #ffffff;
                 border: 1px solid #dbdbdb;
                 border-radius: 10px;
                 padding: 5px 0px 5px 15px;
-                color: #17abe3;
+                color: ''' + ('''#17abe3''' if not disabled else '''rgb(219, 219, 219)''') +''';
                 height: 20px;
             }
             QComboBox::drop-down {
@@ -122,7 +122,7 @@ class AnvnComboBox(QComboBox):
                 width:40px;
             }
             QComboBox::down-arrow {
-                image: url(:/drop_down);
+                image: ''' + ('''url(:/drop_down)''' if not disabled else '''url(:/drop_down_disabled)''') +''';
                 height:20px;
                 width:20px;
             }
@@ -138,6 +138,10 @@ class AnvnComboBox(QComboBox):
     def __call__(self, callback):
         self.currentTextChanged.connect(callback)
         return self
+
+    def setDisabled(self, a0: bool) -> None:
+        self.__set_style(a0)
+        super().setDisabled(a0)
 
 class AnvnProgressBar(QProgressBar):
     def __init__(self, layout: QBoxLayout, color, minimum=0, maximum=100, alignment=Qt.AlignmentFlag.AlignTop) -> None:
@@ -244,9 +248,16 @@ class AnvnTableWidget(QTableWidget):
     def get_selected(self):
         rows = self.model_.selectedRows()
         columns = self.model_.selectedColumns()
-        return [r.row() for r in rows], [c.column() for c in columns]
-
-    def set_items(self, data, digit):
+        rows = [r.row() for r in rows]
+        columns = [c.column() for c in columns]
+        return sorted(rows), sorted(columns)
+    
+    def data2table(self, data, horizontal_header, vertical_header, digit=5):
+        self.clear()
+        self.setRowCount(len(vertical_header))
+        self.setColumnCount(len(horizontal_header))
+        self.setHorizontalHeaderLabels(horizontal_header)
+        self.setVerticalHeaderLabels(vertical_header)
         for i in range(len(data)):
             for j in range(len(data[i])):
                 twi = QTableWidgetItem(str(round(data[i][j], digit)))

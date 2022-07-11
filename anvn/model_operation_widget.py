@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QTextEdit, QStackedWidget
-from widget_utils import AnvnDockWidget, AnvnOpButton, AnvnComboBox, AnvnProgressBar, AnvnDialog, AnvnInformationWidget, AnvnFrame, AnvnTableWidget
+from widget_utils import AnvnDockWidget, AnvnOpButton, AnvnComboBox, AnvnProgressBar, AnvnDialog, AnvnInformationWidget, AnvnFrame
 from PyQt5.QtCore import Qt
 from anvn_utils import AnvnUtils
-
+from table_management import AnvnAttentionTableManagement, AnvnStateTableManagement, AnvnPoolerTableManagement
 
 class AnvnDODialog(AnvnDialog):
     def __init__(self, title, help, input, ok_callback, result_message, number, data, h=470, parent=None) -> None:
@@ -138,190 +138,6 @@ class AnvnDODialog(AnvnDialog):
                 border-radius: 3px;
             }
         ''')
-
-
-class AnvnAttentionTableWidget(AnvnTableWidget):
-    def __init__(self):
-        super(AnvnAttentionTableWidget, self).__init__()
-
-    def add_data2table(self, data, ot, digit=5):
-        self.clear()
-        self.setRowCount(len(data))
-        self.setColumnCount(len(data[0]))
-        self.setHorizontalHeaderLabels(ot)
-        self.setVerticalHeaderLabels(ot)
-        self.set_items(data, digit)
-
-
-class AnvnTableManagement(QWidget):
-    def __init__(self, key, digit=5) -> None:
-        super().__init__()
-        self.main_layout = QVBoxLayout()
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self.main_layout)
-        self.current_index = 0
-        self.current_data = []
-        self.key = key
-        self.digit = digit
-        self.data_num = None
-        self.layers = None
-        self.heads = None
-        self.table_widget = None
-        self.remove_but = self.__init_table_op()
-
-    def remove_func(self):
-        pass
- 
-    def __init_table_op(self):
-        layout = QHBoxLayout()
-
-        remove_but = AnvnOpButton('#d81e06', 'Remove', 'remove', layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.remove_func)
-        remove_but.setDisabled(True)
-
-        layout.addStretch(0)
-        self.main_layout.addLayout(layout)
-        return remove_but
-    
-    def set_digit(self, digit):
-        self.digit = digit
-        self.add_data2table()
-
-    def get_digit(self):
-        return self.digit
-
-    def get_key(self):
-        return self.key
-
-    def get_data_num(self):
-        return self.data_num
-
-    def get_layers(self):
-        return self.layers
-
-    def get_heads(self):
-        return self.heads
-
-    def is_start(self):
-        return self.current_index == 0
-
-    def is_end(self):
-        return self.current_index == len(self.current_data) - 1
-
-    def revoke(self):
-        if self.is_start():
-            return False
-        self.current_index -= 1
-        self.add_data2table()
-        return True
-
-    def forward(self):
-        if self.is_end():
-            return False
-        self.current_index += 1
-        self.add_data2table()
-        return True
-
-    def add_data2table(self):
-        pass
-    
-    def table_clicked(self):
-        print('table_clicked')
-
-    def delete_index_after(self):
-        self.current_data = self.current_data[:self.current_index + 1]
-
-
-class AnvnAttentionTableManagement(AnvnTableManagement):
-    def __init__(self, data, ots, iis, data_num, layers, heads, key, digit):
-        super(AnvnAttentionTableManagement, self).__init__(key, digit)
-        self.data_num = data_num
-        self.layers = layers
-        self.heads = heads
-        self.data = data
-        self.ots = ots
-        self.iis = iis
-        self.current_data.append((data, ots, iis, 0, 0, 0))
-
-        self.table_widget = AnvnAttentionTableWidget()
-        self.main_layout.addWidget(self.table_widget)
-
-        self.add_data2table()
-
-    def add_data2table(self):
-        data, ots, _, di, li, hi = self.current_data[self.current_index]
-        self.table_widget.add_data2table(
-            data[di][li][hi], ots[di], self.digit)
-
-
-class AnvnStateTableWidget(AnvnTableWidget):
-    def __init__(self):
-        super(AnvnStateTableWidget, self).__init__()
-
-    def add_data2table(self, data, ot, digit):
-        self.clear()
-        self.setRowCount(len(data))
-        self.setColumnCount(len(data[0]))
-        self.setHorizontalHeaderLabels(
-            [str(i) for i in range(1, len(data[0]) + 1)])
-        self.setVerticalHeaderLabels(ot)
-        self.set_items(data, digit)
-
-
-class AnvnStateTableManagement(AnvnTableManagement):
-    def __init__(self, data, ots, iis, data_num, layers, key, digit):
-        super(AnvnStateTableManagement, self).__init__(key, digit)
-        self.data_num = data_num
-        self.layers = layers
-        self.data = data
-        self.ots = ots
-        self.iis = iis
-        if self.layers is None:
-            self.current_data.append((data, ots, iis, 0))
-        else:
-            self.current_data.append((data, ots, iis, 0, 0))
-        self.table_widget = AnvnStateTableWidget()
-        self.main_layout.addWidget(self.table_widget)
-        self.add_data2table()
-
-    def add_data2table(self):
-        if self.layers is None:
-            data, ots, _, di = self.current_data[self.current_index]
-            self.table_widget.add_data2table(
-                data[di], ots[di], self.digit)
-        else:
-            data, ots, _, di, li = self.current_data[self.current_index]
-            self.table_widget.add_data2table(
-                data[di][li], ots[di], self.digit)
-
-
-class AnvnPoolerTableWidget(AnvnTableWidget):
-    def __init__(self):
-        super(AnvnPoolerTableWidget, self).__init__()
-
-    def add_data2table(self, data, data_num, digit):
-        self.clear()
-        self.setRowCount(len(data))
-        self.setColumnCount(len(data[0]))
-        self.setHorizontalHeaderLabels(
-            [str(i) for i in range(1, len(data[0]) + 1)])
-        self.setVerticalHeaderLabels([str(i) for i in data_num])
-        self.set_items(data, digit)
-
-
-class AnvnPoolerTableManagement(AnvnTableManagement):
-    def __init__(self, data, data_num, key, digit):
-        super(AnvnPoolerTableManagement, self).__init__(key, digit)
-        self.data_num = data_num
-        self.data = data
-        self.current_data.append((data, data_num))
-        self.table_widget = AnvnPoolerTableWidget()
-        self.main_layout.addWidget(self.table_widget)
-        self.add_data2table()
-
-    def add_data2table(self):
-        data, data_num = self.current_data[self.current_index]
-        self.table_widget.add_data2table(data, data_num, self.digit)
-
 
 class AnvnLMOWidget(QWidget):
     def __init__(self) -> None:
@@ -467,8 +283,7 @@ class AnvnMMOWidget(QWidget):
         return data, ots, iis
 
     def __add_tabel_widget(self):
-        for i in range(self.table_main.count() - 1, self.current_table, -1):
-            self.table_main.removeWidget(self.table_main.widget(i))
+        self.__remove_current_after_table()
 
         if self.current_table >= 0:
             tabel = self.table_main.currentWidget()
@@ -487,9 +302,18 @@ class AnvnMMOWidget(QWidget):
         else:
             table_mangement = AnvnPoolerTableManagement(
                 data, self.current_data_num, key=self.key, digit=self.digit)
+        table_mangement.change_event(self.__table_changed_func)
         self.table_main.addWidget(table_mangement)
         self.current_table += 1
         self.table_main.setCurrentIndex(self.current_table)
+        self.__revoke_forward_disable()
+    
+    def __remove_current_after_table(self):
+        for i in range(self.table_main.count() - 1, self.current_table, -1):
+            self.table_main.removeWidget(self.table_main.widget(i))
+
+    def __table_changed_func(self):
+        self.__remove_current_after_table()
         self.__revoke_forward_disable()
 
     def __set_data_num(self, data):
@@ -582,7 +406,7 @@ class AnvnMMOWidget(QWidget):
         if not table.revoke():
             self.current_table -= 1
             self.table_main.setCurrentIndex(self.current_table)
-        self.__update_current_data()
+            self.__update_current_data()
         self.__revoke_forward_disable()
 
     def __update_current_data(self):
@@ -599,8 +423,7 @@ class AnvnMMOWidget(QWidget):
         if not table.forward():
             self.current_table += 1
             self.table_main.setCurrentIndex(self.current_table)
-
-        self.__update_current_data()
+            self.__update_current_data()
         self.__revoke_forward_disable()
 
     def __data_choice_changed(self):
