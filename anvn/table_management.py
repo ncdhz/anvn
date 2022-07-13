@@ -24,7 +24,7 @@ class AnvnTableManagement(QWidget):
         self.change_event_callback = None
         self.merge_option = {'min': np.min, 'max': np.max, 'mean': np.mean, 'median': np.median, 'sum': np.sum}
         self.merge_key = 'mean'
-        self.remove_but, self.merge_but = self.__init_table_op()
+        self.remove_but, self.merge_cb, self.merge_but = self.__init_table_op()
         self.table_widget = AnvnTableWidget()
         self.table_widget.itemSelectionChanged.connect(self.table_clicked)
         self.main_layout.addWidget(self.table_widget)
@@ -124,17 +124,17 @@ class AnvnTableManagement(QWidget):
 
     def table_clicked(self):
         rows, columns = self.table_widget.get_selected()
-        
-        if len(rows) == 0 and len(columns) == 0:
-            self.merge_but.setDisabled(True)
-            self.remove_but.setDisabled(True)
-            
-        else:
+        if len(rows) > 1 or len(columns) > 1:
             self.merge_but.setDisabled(False)
-            if self.table_widget.columnCount() == len(columns) or self.table_widget.rowCount() == len(rows):
-                self.remove_but.setDisabled(True)
-            else:
-                self.remove_but.setDisabled(False)
+            self.merge_cb.setDisabled(False)
+        else:
+            self.merge_cb.setDisabled(True)
+            self.merge_but.setDisabled(True)
+        
+        if (len(rows) == 0 and len(columns) == 0) or self.table_widget.columnCount() == len(columns) or self.table_widget.rowCount() == len(rows):
+            self.remove_but.setDisabled(True)
+        else:
+            self.remove_but.setDisabled(False)
         
     def delete_index_after(self):
         self.current_data = self.current_data[:self.current_index + 1]
@@ -172,7 +172,7 @@ class AnvnAttentionTableManagement(AnvnTableManagement):
 
         self.current_index += 1
         self.current_data.append(AnvnUtils.deepcopy(self.data, self.horizontal_headers, self.vertical_headers, self.horizontal_ids, self.vertical_ids, di, li, hi))
-
+    
     def refresh_data(self):
         self.data, self.horizontal_headers, self.vertical_headers, self.horizontal_ids, self.vertical_ids, _, _, _ = AnvnUtils.deepcopy(*self.current_data[self.current_index])
 
