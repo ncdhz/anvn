@@ -65,11 +65,17 @@ class AnvnTableManagement(QWidget):
         merge_cb.setEditText(self.merge_key)
         merge_cb.setDisabled(True)
         merge_but = AnvnOpButton('#17abe3', 'Merge', 'merge', layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__merge_func)
+        merge_but.setText(self.merge_key)
         merge_but.setDisabled(True)
-        
+        merge_but.currentTextChanged.connect(self.__merge_type_func)
         layout.addStretch(0)
         self.main_layout.addLayout(layout)
         return remove_but, merge_cb, merge_but
+
+    def __merge_type_func(self, text):
+        if text != self.merge_key:
+            self.merge_key = text
+            self.merge_but.setText(text)
 
     def set_digit(self, digit):
         self.digit = digit
@@ -196,7 +202,7 @@ class AnvnAttentionTableManagement(AnvnTableManagement):
                     row_merge = []
                     dlh = self.data[di][layer][head]
                     for i, row in enumerate(rows):
-                        row_merge.extend(dlh[row - i])
+                        row_merge.append(dlh[row - i])
                         del dlh[row - i]
                     row_m = self.merge_option[self.merge_key](row_merge, 0).tolist()
                     dlh.insert(rows[0], row_m)
@@ -297,6 +303,57 @@ class AnvnStateTableManagement(AnvnTableManagement):
         else:
             self.current_data.append(AnvnUtils.deepcopy(self.data, self.horizontal_headers, self.vertical_headers, self.vertical_ids, di, li))
 
+    def merge_func(self):
+        rows, columns = self.table_widget.get_selected()
+        if self.layers is None:
+            _, _, _, _, di = self.current_data[self.current_index]
+        else:
+            _, _, _, _, di, _ = self.current_data[self.current_index]
+
+        if len(rows) > 1:
+            ver_ids = []
+            for i, row in enumerate(rows):
+                del self.vertical_headers[di][row - i]
+                rid = self.vertical_ids[di][row - i]
+                if isinstance(rid, list):
+                    ver_ids.extend(rid)
+                else:
+                    ver_ids.append(rid)
+                del self.vertical_ids[di][row - i]
+            id = self.tokenizer.decode(ver_ids)
+            self.vertical_headers[di].insert(rows[0], id)
+            self.vertical_ids[di].insert(rows[0], ver_ids)
+            if self.layers is not None:
+                for layer in self.layers:
+                    row_merge = []
+                    dlh = self.data[di][layer]
+                    for i, row in enumerate(rows):
+                        row_merge.append(dlh[row - i])                        
+                        del dlh[row - i]
+                    dlh.insert(rows[0], self.merge_option[self.merge_key](row_merge, 0).tolist())
+
+        if len(columns) > 1:
+            hor_ids = []
+            for i, column in enumerate(columns):
+                del self.horizontal_headers[di][column - i]
+                hid = self.horizontal_ids[di][column - i]
+                if isinstance(hid, list):
+                    hor_ids.extend(hid)
+                else:
+                    hor_ids.append(hid)
+                del self.horizontal_ids[di][column - i]
+            id = self.tokenizer.decode(hor_ids)
+            self.horizontal_headers[di].insert(columns[0], id)
+            self.horizontal_ids[di].insert(columns[0], hor_ids)
+            if self.layers is not None:
+                for layer in self.layers:
+                    column_merge = []
+                    dlh = self.data[di][layer]
+                    for i, column in enumerate(columns):
+                        column_merge.append(dlh[:, column - i])
+                        dlh[:, column - i] = self.merge_option[self.merge_key](column_merge, 0)
+                        
+            
     def data2table(self):
         if self.layers is None:
             data, horizontal_headers, vertical_headers, _, di = self.current_data[self.current_index]
