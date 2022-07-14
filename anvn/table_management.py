@@ -5,7 +5,7 @@ from anvn_utils import AnvnUtils
 import numpy as np
 
 class AnvnTableManagement(QWidget):
-    def __init__(self, key, digit=5) -> None:
+    def __init__(self, key, digit=5, tokenizer=None) -> None:
         super().__init__()
         self.main_layout = QVBoxLayout()
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -22,6 +22,7 @@ class AnvnTableManagement(QWidget):
         self.vertical_ids = None
         self.horizontal_ids = None
         self.change_event_callback = None
+        self.tokenizer = tokenizer
         self.merge_option = {'min': np.min, 'max': np.max, 'mean': np.mean, 'median': np.median, 'sum': np.sum}
         self.merge_key = 'mean'
         self.remove_but, self.merge_cb, self.merge_but = self.__init_table_op()
@@ -140,8 +141,8 @@ class AnvnTableManagement(QWidget):
         self.current_data = self.current_data[:self.current_index + 1]
 
 class AnvnAttentionTableManagement(AnvnTableManagement):
-    def __init__(self, data, ots, iis, data_num, layers, heads, key, digit):
-        super(AnvnAttentionTableManagement, self).__init__(key, digit)
+    def __init__(self, data, ots, iis, data_num, layers, heads, key, digit, tokenizer):
+        super(AnvnAttentionTableManagement, self).__init__(key, digit, tokenizer)
         self.data_num = data_num
         self.layers = layers
         self.heads = heads
@@ -173,6 +174,65 @@ class AnvnAttentionTableManagement(AnvnTableManagement):
         self.current_index += 1
         self.current_data.append(AnvnUtils.deepcopy(self.data, self.horizontal_headers, self.vertical_headers, self.horizontal_ids, self.vertical_ids, di, li, hi))
     
+    def merge_func(self):
+        _, _, _, _, _, di, li, hi = self.current_data[self.current_index]
+        rows, columns = self.table_widget.get_selected()
+        if len(rows) > 1:
+            ver_ids = []
+            for i, row in enumerate(rows):
+                del self.vertical_headers[di][row - i]
+                rid = self.vertical_ids[di][row - i]
+                if isinstance(rid, list):
+                    ver_ids.extend(rid)
+                else:
+                    ver_ids.append(rid)
+                del self.vertical_ids[di][row - i]
+            id = self.tokenizer.decode(ver_ids)
+            self.vertical_headers[di].insert(rows[0], id)
+            self.vertical_ids[di].insert(rows[0], ver_ids)
+            
+            for layer in self.layers:
+                for head in self.heads:
+                    row_merge = []
+                    dlh = self.data[di][layer][head]
+                    for i, row in enumerate(rows):
+                        row_merge.extend(dlh[row - i])
+                        del dlh[row - i]
+                    row_m = self.merge_option[self.merge_key](row_merge, 0).tolist()
+                    dlh.insert(rows[0], row_m)
+                    
+        if len(columns) > 1:
+            hor_ids = []
+            for i, column in enumerate(columns):
+                del self.horizontal_headers[di][column - i]
+                rid = self.horizontal_ids[di][column - i]
+                if isinstance(rid, list):
+                    hor_ids.extend(rid)
+                else:
+                    hor_ids.append(rid)
+                del self.horizontal_ids[di][column - i]
+            id = self.tokenizer.decode(hor_ids)
+            self.horizontal_headers[di].insert(columns[0], id)
+            self.horizontal_ids[di].insert(columns[0], hor_ids)
+
+            for layer in self.layers:
+                for head in self.heads:
+                    dlh = self.data[di][layer][head]
+
+                    col_merge = []
+                    for i, column in enumerate(columns):
+                        c_merge = []
+                        for j in range(len(dlh)):
+                            c_merge.append(dlh[j][column - i])
+                            del dlh[j][column - i]
+                        col_merge.append(c_merge)
+                    col_m = self.merge_option[self.merge_key](col_merge, 0).tolist()
+                    for j in range(len(dlh)):
+                        dlh[j].insert(columns[0], col_m[j])
+
+        self.current_index += 1
+        self.current_data.append(AnvnUtils.deepcopy(self.data, self.horizontal_headers, self.vertical_headers, self.horizontal_ids, self.vertical_ids, di, li, hi))
+
     def refresh_data(self):
         self.data, self.horizontal_headers, self.vertical_headers, self.horizontal_ids, self.vertical_ids, _, _, _ = AnvnUtils.deepcopy(*self.current_data[self.current_index])
 

@@ -292,16 +292,16 @@ class AnvnMMOWidget(QWidget):
         data, ots, iis = self.__get_table_data()
         if self.key == self.attentions:
             table_mangement = AnvnAttentionTableManagement(
-                data, ots, iis, self.current_data_num, self.current_layers, self.current_heads, key=self.key, digit=self.digit)
+                data, ots, iis, self.current_data_num, self.current_layers, self.current_heads, key=self.key, digit=self.digit, tokenizer=self.tokenizer)
         elif self.key == self.hidden_states:
             table_mangement = AnvnStateTableManagement(
-                data, ots, iis, self.current_data_num, self.current_layers, key=self.key, digit=self.digit)
+                data, ots, iis, self.current_data_num, self.current_layers, key=self.key, digit=self.digit, tokenizer=self.tokenizer)
         elif self.key == self.last_hidden_state:
             table_mangement = AnvnStateTableManagement(
-                data, ots, iis, self.current_data_num, key=self.key, layers=None, digit=self.digit)
+                data, ots, iis, self.current_data_num, key=self.key, layers=None, digit=self.digit, tokenizer=self.tokenizer)
         else:
             table_mangement = AnvnPoolerTableManagement(
-                data, self.current_data_num, key=self.key, digit=self.digit)
+                data, self.current_data_num, key=self.key, digit=self.digit, tokenizer=self.tokenizer)
         table_mangement.change_event(self.__table_changed_func)
         self.table_main.addWidget(table_mangement)
         self.current_table += 1
