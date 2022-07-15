@@ -301,7 +301,7 @@ class AnvnMMOWidget(QWidget):
                 data, ots, iis, self.current_data_num, key=self.key, layers=None, digit=self.digit, tokenizer=self.tokenizer)
         else:
             table_mangement = AnvnPoolerTableManagement(
-                data, self.current_data_num, key=self.key, digit=self.digit, tokenizer=self.tokenizer)
+                data, self.current_data_num, key=self.key, digit=self.digit)
         table_mangement.change_event(self.__table_changed_func)
         self.table_main.addWidget(table_mangement)
         self.current_table += 1
