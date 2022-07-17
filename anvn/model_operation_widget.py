@@ -469,10 +469,14 @@ class AnvnModelOperationWidget(AnvnDockWidget):
         self.tokenizer = None
         self.all_ots = None
         self.all_iis = None
+        self.visualization_callback = None
         self.setStatusTip(title)
         self.anvn_lmo_widget = AnvnLMOWidget()
         self.anvn_lmo_widget.clicked(self.injection_data_func)
         self.setWidget(self.anvn_lmo_widget)
+
+    def set_visualization_callback(self, callback):
+        self.visualization_callback = callback
 
     def set_outputs(self, outputs):
         self.outputs = outputs

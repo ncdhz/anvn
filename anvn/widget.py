@@ -45,12 +45,15 @@ class AnvnWidget(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea,
                            self.anvn_model_operation_widget)
         
-        self.anvn_pre_model.start()
+        
+        self.anvn_data_visualization_widget = AnvnDataVisualizationWidget(
+            parent=self)
 
-        # self.anvn_data_visualization_widget = AnvnDataVisualizationWidget(
-        #     parent=self)
+        self.anvn_model_operation_widget.set_visualization_callback(self.anvn_data_visualization_widget.data_monitor)
         # self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea,
         #                    self.anvn_data_visualization_widget)
+
+        self.anvn_pre_model.start()
     
     def get_input_data(self, data_list):
         self.anvn_model_operation_widget.widget_reset()
