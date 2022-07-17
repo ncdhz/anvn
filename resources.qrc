@@ -54,4 +54,7 @@
     <qresource>
         <file alias="drop_down_disabled">resources/icons/drop_down_disabled.png</file>
     </qresource>
+    <qresource>
+        <file alias="show">resources/icons/show.png</file>
+    </qresource>
 </RCC>

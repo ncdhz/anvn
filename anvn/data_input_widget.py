@@ -102,8 +102,7 @@ class AnvnDataInputWidget(AnvnDockWidget):
             data_text = QTextEdit()
             data_text.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
             self.data_text_list.append(data_text)
-
-        data_text.setFixedHeight(100)
+            data_text.setFixedHeight(80)
         data_v_layout.addWidget(data_text)
 
         data_widget.setLayout(data_v_layout)

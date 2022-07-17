@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 from anvn_utils import AnvnUtils
 from table_management import AnvnAttentionTableManagement, AnvnStateTableManagement, AnvnPoolerTableManagement
 
+
 class AnvnDODialog(AnvnDialog):
     def __init__(self, title, help, input, ok_callback, result_message, number, data, h=470, parent=None) -> None:
         super().__init__(title, h=h, parent=parent)
@@ -139,6 +140,7 @@ class AnvnDODialog(AnvnDialog):
             }
         ''')
 
+
 class AnvnLMOWidget(QWidget):
     def __init__(self) -> None:
         super(AnvnLMOWidget, self).__init__()
@@ -224,8 +226,9 @@ class AnvnLMOWidget(QWidget):
 
 
 class AnvnMMOWidget(QWidget):
-    def __init__(self, tokenizer, outputs, all_ots, all_iis, last_hidden_state='last_hidden_state', pooler_output='pooler_output', hidden_states='hidden_states', attentions='attentions'):
+    def __init__(self, tokenizer, outputs, all_ots, all_iis, last_hidden_state='last_hidden_state', pooler_output='pooler_output', hidden_states='hidden_states', attentions='attentions', callback_func=None):
         super(AnvnMMOWidget, self).__init__()
+        self.callback_func = callback_func
         self.outputs = outputs
         self.output_keys = list(outputs.keys())
         self.all_ots = all_ots
@@ -247,7 +250,7 @@ class AnvnMMOWidget(QWidget):
         self.main_layout = QVBoxLayout()
 
         self.data_num_but, self.key_but, self.layer_but, self.head_but, self.digit_but, self.revoke_but, self.forward_but = self.__init_data_choice()
-        
+
         self.setLayout(self.main_layout)
 
         self.table_main = QStackedWidget()
@@ -255,11 +258,24 @@ class AnvnMMOWidget(QWidget):
         self.main_layout.addWidget(self.table_main)
         self.current_table = -1
 
+        self.__init_data_show()
+
         self.main_layout.addStretch(0)
         # add key connect, init table
         self.key_but(self.__key_changed_func)
         if self.attentions in self.output_keys:
             self.key_but.setCurrentText(self.attentions)
+
+    def __show_func(self):
+        if self.callback_func is not None:
+            table = self.table_main.currentWidget()
+            self.callback_func(table)
+
+    def __init_data_show(self):
+        data_show = QHBoxLayout()
+        data_show.addStretch(0)
+        AnvnOpButton('#1296db', 'Show', 'show', data_show)(self.__show_func)
+        self.main_layout.addLayout(data_show)
 
     def __get_table_data(self):
         data, ots, iis = [], [], []
@@ -307,7 +323,7 @@ class AnvnMMOWidget(QWidget):
         self.current_table += 1
         self.table_main.setCurrentIndex(self.current_table)
         self.__revoke_forward_disable()
-    
+
     def __remove_current_after_table(self):
         for i in range(self.table_main.count() - 1, self.current_table, -1):
             self.table_main.removeWidget(self.table_main.widget(i))
@@ -463,20 +479,20 @@ class AnvnMMOWidget(QWidget):
 
 
 class AnvnModelOperationWidget(AnvnDockWidget):
-    def __init__(self, title='Model Operation', parent=None):
+    def __init__(self, title='Model Operation', parent=None, callback_func=None):
         super(AnvnModelOperationWidget, self).__init__(title, parent)
         self.outputs = None
         self.tokenizer = None
         self.all_ots = None
         self.all_iis = None
-        self.visualization_callback = None
         self.setStatusTip(title)
-        self.anvn_lmo_widget = AnvnLMOWidget()
-        self.anvn_lmo_widget.clicked(self.injection_data_func)
-        self.setWidget(self.anvn_lmo_widget)
+        self.lmo_widget = AnvnLMOWidget()
+        self.lmo_widget.clicked(self.injection_data_func)
+        self.setWidget(self.lmo_widget)
+        self.callback_func = callback_func
 
-    def set_visualization_callback(self, callback):
-        self.visualization_callback = callback
+    def set_callback_func(self, callback):
+        self.callback_func = callback
 
     def set_outputs(self, outputs):
         self.outputs = outputs
@@ -495,22 +511,22 @@ class AnvnModelOperationWidget(AnvnDockWidget):
         return self
 
     def set_model_load_text(self, text=None):
-        self.anvn_lmo_widget.set_model_load_text(text)
+        self.lmo_widget.set_model_load_text(text)
 
     def set_data_load_text(self, text=None):
-        self.anvn_lmo_widget.set_data_load_text(text)
+        self.lmo_widget.set_data_load_text(text)
 
     def set_model_run_text(self, text=None):
-        self.anvn_lmo_widget.set_model_run_text(text)
+        self.lmo_widget.set_model_run_text(text)
 
     def model_load_stop(self):
-        self.anvn_lmo_widget.model_load_stop()
+        self.lmo_widget.model_load_stop()
 
     def set_data_load_value(self, value):
-        self.anvn_lmo_widget.set_data_load_value(value)
+        self.lmo_widget.set_data_load_value(value)
 
     def set_model_run_value(self, value):
-        self.anvn_lmo_widget.set_model_run_value(value)
+        self.lmo_widget.set_model_run_value(value)
 
     def widget_reset(self):
         self.outputs = None
@@ -521,12 +537,16 @@ class AnvnModelOperationWidget(AnvnDockWidget):
         self.set_data_load_text()
         self.set_model_run_text()
         self.set_model_run_value(0)
-        self.setWidget(self.anvn_lmo_widget)
-        self.anvn_lmo_widget.disabled(True)
+        self.setWidget(self.lmo_widget)
+        self.lmo_widget.disabled(True)
 
     def disabled(self, disabled):
-        self.anvn_lmo_widget.disabled(disabled)
+        self.lmo_widget.disabled(disabled)
+
+    def __mmo_callback_func(self, table):
+        if self.callback_func is not None:
+            self.callback_func(table)
 
     def injection_data_func(self):
         self.setWidget(AnvnMMOWidget(
-            self.tokenizer, self.outputs, self.all_ots, self.all_iis))
+            self.tokenizer, self.outputs, self.all_ots, self.all_iis, callback_func=self.__mmo_callback_func))
