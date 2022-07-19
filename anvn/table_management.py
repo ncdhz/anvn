@@ -15,6 +15,7 @@ class AnvnTableManagement(QWidget):
         self.key = key
         self.digit = digit
         self.data_num = None
+        self.data = None
         self.layers = None
         self.heads = None
         self.vertical_headers = None
@@ -29,6 +30,15 @@ class AnvnTableManagement(QWidget):
         self.table_widget = AnvnTableWidget()
         self.table_widget.itemSelectionChanged.connect(self.table_clicked)
         self.main_layout.addWidget(self.table_widget)
+
+    def get_vertical_headers(self):
+        return self.vertical_headers
+    
+    def get_horizontal_headers(self):
+        return self.horizontal_headers
+
+    def get_data(self):
+        return self.data
 
     def __remove_func(self):
         self.__refresh_data()
