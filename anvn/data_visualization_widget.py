@@ -2,15 +2,13 @@ from widget_utils import AnvnDockWidget
 from table_management import AnvnTableManagement
 from PyQt5.QtWidgets import QListWidget, QMainWindow, QListWidgetItem
 from PyQt5.QtCore import Qt
-class AnvnData:
-    def __init__(self, data=None, data_num=None, heads=None, layers=None, key=None, horizontal_headers=None, vertical_headers=None):
+from anvn_data import AnvnData
+
+class AnvnVisualization(AnvnDockWidget):
+    def __init__(self, data, title, parent=None):
+        super().__init__(title, parent)
         self.data = data
-        self.data_num = data_num
-        self.heads = heads
-        self.layers = layers
-        self.key = key
-        self.horizontal_headers = horizontal_headers
-        self.vertical_headers = vertical_headers
+        self.setStatusTip(title)
 
 class AnvnDataVisualizationWidget(AnvnDockWidget):
     def __init__(self, title='Data Visualization ', parent=None):
@@ -18,10 +16,12 @@ class AnvnDataVisualizationWidget(AnvnDockWidget):
         self.setStatusTip(title)
         self.data_list = QListWidget(self)
         self.data_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.data_visualization_list = []
         self.datas = []
+        self.setWidget(self.data_list)
     
     def data_monitor(self, table: AnvnTableManagement):
-        data = AnvnData(data=table.get_data(), data_num=table.get_data_num(), heads=table.get_heads(), layers=table.get_layers(), key=table.get_key(), horizontal_headers=table.get_horizontal_headers(), vertical_headers=table.get_vertical_headers())
+        data = AnvnData(data=table.get_data(), data_num=table.get_data_num(), heads=table.get_heads(), layers=table.get_layers(), key=table.get_key(), horizontal_headers=table.get_horizontal_headers(), vertical_headers=table.get_vertical_headers(), horizontal_ids=table.get_horizontal_ids(), vertical_ids=table.get_vertical_ids())
         self.add_data(data)
 
     def add_data(self, data):
@@ -35,6 +35,12 @@ class AnvnDataVisualizationWidget(AnvnDockWidget):
     
     def __get_data_item(self):
         main_window = QMainWindow()
+        
+        index = self.data_list.count()
+        data = self.datas[index]
+        data_widget = AnvnVisualization(data, title=f'{data.get_key()}:{index + 1}')
+        main_window.addDockWidget(Qt.DockWidgetArea.AllDockWidgetAreas, data_widget)
         data_item = QListWidgetItem()
         data_item.setSizeHint(main_window.sizeHint())
         return data_item, main_window
+

@@ -16,6 +16,7 @@ class AnvnDockWidget(QDockWidget):
                 text-align: left center; 
             }
         ''')
+        self.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable | QDockWidget.DockWidgetFeature.DockWidgetFloatable)
 
 
 class AnvnButton(QPushButton):
@@ -176,6 +177,7 @@ class AnvnDialog(QDialog):
         self.setModal(True)
         self.setFixedSize(QSize(w, h))
         self.setWindowFlags(Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.Dialog)
+        self.setWindowIcon(QIcon(':/logo'))
 
 class AnvnFrame(QFrame):
     def __init__(self, parent=None) -> None:

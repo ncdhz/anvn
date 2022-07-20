@@ -86,5 +86,4 @@ class AnvnWidget(QMainWindow):
         self.model_operation_widget.set_model_load_text('Model loading completed:')
         self.model_operation_widget.model_load_stop()
         self.dataset.set_tokenizer(self.pre_model.get_tokenizer())
-
         self.model_run.set_model(self.pre_model.get_model())

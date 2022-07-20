@@ -2,9 +2,10 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 from widget_utils import AnvnOpButton, AnvnTableWidget, AnvnComboBox
 from PyQt5.QtCore import Qt
 from anvn_utils import AnvnUtils
+from anvn_data import AnvnData
 import numpy as np
 
-class AnvnTableManagement(QWidget):
+class AnvnTableManagement(QWidget, AnvnData):
     def __init__(self, key, digit=5, tokenizer=None) -> None:
         super().__init__()
         self.main_layout = QVBoxLayout()
@@ -14,14 +15,6 @@ class AnvnTableManagement(QWidget):
         self.current_data = []
         self.key = key
         self.digit = digit
-        self.data_num = None
-        self.data = None
-        self.layers = None
-        self.heads = None
-        self.vertical_headers = None
-        self.horizontal_headers = None
-        self.vertical_ids = None
-        self.horizontal_ids = None
         self.change_event_callback = None
         self.tokenizer = tokenizer
         self.merge_option = {'min': np.min, 'max': np.max, 'mean': np.mean, 'median': np.median, 'sum': np.sum}
@@ -30,15 +23,6 @@ class AnvnTableManagement(QWidget):
         self.table_widget = AnvnTableWidget()
         self.table_widget.itemSelectionChanged.connect(self.table_clicked)
         self.main_layout.addWidget(self.table_widget)
-
-    def get_vertical_headers(self):
-        return self.vertical_headers
-    
-    def get_horizontal_headers(self):
-        return self.horizontal_headers
-
-    def get_data(self):
-        return self.data
 
     def __remove_func(self):
         self.__refresh_data()
@@ -94,17 +78,7 @@ class AnvnTableManagement(QWidget):
     def get_digit(self):
         return self.digit
 
-    def get_key(self):
-        return self.key
 
-    def get_data_num(self):
-        return self.data_num
-
-    def get_layers(self):
-        return self.layers
-
-    def get_heads(self):
-        return self.heads
 
     def is_start(self):
         return self.current_index == 0
