@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar, QDialog, QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QWidget, QHBoxLayout
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QSize, QEvent
-from torch import is_floating_point
 from resources import *
 
 class AnvnDockWidget(QDockWidget):
