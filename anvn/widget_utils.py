@@ -1,24 +1,60 @@
-from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar, QDialog, QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar, QDialog, QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QWidget, QHBoxLayout
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QSize, QEvent
+from torch import is_floating_point
 from resources import *
 
-
 class AnvnDockWidget(QDockWidget):
-    def __init__(self, title, parent=None):
+    def __init__(self, title='', parent=None):
         super(AnvnDockWidget, self).__init__(title, parent)
         self.setStyleSheet('''
             QDockWidget {
-                color: rgb(226, 192, 141);
-            }
-            QDockWidget::title {
-                background: #ffffff;
-                text-align: left center; 
+                background-color: #fff;
             }
         ''')
-        self.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable | QDockWidget.DockWidgetFeature.DockWidgetFloatable)
+        self.is_floating = False
+        self.title = title
+        self.setTitleBarWidget(self.__get_title_bar())
+    
+    def moveEvent(self, a0):
+        super().moveEvent(a0)
+        if self.isFloating() != self.is_floating:
+            self.is_floating = self.isFloating()
+            self.setTitleBarWidget(self.__get_title_bar())
 
+    def __reduction_func(self):
+        self.setFloating(False)
 
+    def __maximized_func(self, button):
+        def mf():
+            if self.isMaximized():
+                self.showNormal()
+                button.show_maximize()
+            else:
+                self.showMaximized()
+                button.show_recovery()
+        return mf
+    
+    def __get_title_bar(self):
+        title_bar = QWidget()
+        title_bar_layout = QHBoxLayout()
+        title = QLabel(self.title)
+        title_bar_layout.addWidget(title)
+        title.setStyleSheet('''
+            QLabel {
+                color: rgb(226, 192, 141);
+            }
+        ''')
+        title_bar_layout.addStretch(0)
+        if self.is_floating:
+            maximize_recovery = AnvnMaximizeRecoveryButton()
+            maximize_recovery(self.__maximized_func(maximize_recovery))
+            title_bar_layout.addWidget(maximize_recovery)
+            close = AnvnDeleteButton()(self.__reduction_func)
+            title_bar_layout.addWidget(close)
+        title_bar.setLayout(title_bar_layout)
+        return title_bar
+    
 class AnvnButton(QPushButton):
     def __init__(self):
         super(AnvnButton, self).__init__()
@@ -27,19 +63,15 @@ class AnvnButton(QPushButton):
         self.clicked.connect(callback)
         return self
 
-
-class AnvnDeleteButton(AnvnButton):
-    def __init__(self, w, h, is_red=False):
-        super(AnvnDeleteButton, self).__init__()
-        self.is_red = is_red
-        self.sent_delete_button_red_icon = QIcon(':/delete_red')
-        self.sent_delete_button_gray_icon = QIcon(':/delete_gray')
-
-        self.setIcon(
-            self.sent_delete_button_red_icon if is_red else self.sent_delete_button_gray_icon)
-        self.setIconSize(QSize(w, h))
+class AnvnIconChangeButton(AnvnButton):
+    def __init__(self, width=20, height=20, icon_leave=None, icon_enter=None):
+        super().__init__()
+        self.icon_enter = QIcon(icon_enter)
+        self.icon_leave = QIcon(icon_leave)
+        self.setIconSize(QSize(width, height))
+        self.setIcon(self.icon_leave)
         self.__set_style()
-        
+
     def __set_style(self):
         self.setStyleSheet('''
             QPushButton {
@@ -48,16 +80,38 @@ class AnvnDeleteButton(AnvnButton):
                 padding: 0px;
             }
         ''')
-        
+    
+    def set_icon_enter(self, icon_enter):
+        self.icon_enter = QIcon(icon_enter)
+    
+    def set_icon_leave(self, icon_leave):
+        self.icon_leave = QIcon(icon_leave)
+
     def enterEvent(self, a0: QEvent) -> None:
-        self.setIcon(
-            self.sent_delete_button_red_icon if not self.is_red else self.sent_delete_button_gray_icon)
+        self.setIcon(self.icon_enter)
         return super().enterEvent(a0)
 
     def leaveEvent(self, a0: QEvent) -> None:
-        self.setIcon(
-            self.sent_delete_button_red_icon if self.is_red else self.sent_delete_button_gray_icon)
+        self.setIcon(self.icon_leave)
         return super().leaveEvent(a0)
+
+class AnvnDeleteButton(AnvnIconChangeButton):
+    def __init__(self, w=20, h=20,):
+        super(AnvnDeleteButton, self).__init__(width=w, height=h, icon_leave=':/delete', icon_enter=':/delete_cover')
+
+class AnvnMaximizeRecoveryButton(AnvnIconChangeButton):
+    def __init__(self, width=20, height=20):
+        super().__init__(width, height, icon_leave=':/maximize', icon_enter=':/maximize_cover')
+    
+    def show_maximize(self):
+        self.set_icon_enter(':/maximize_cover')
+        self.set_icon_leave(':/maximize')
+        self.setIcon(self.icon_leave)
+
+    def show_recovery(self):
+        self.set_icon_enter(':/recovery_cover')
+        self.set_icon_leave(':/recovery')
+        self.setIcon(self.icon_leave)
 
 class AnvnOpButton(AnvnButton):
     def __init__(self, color, text, icon_name, layout: QBoxLayout, w=20, h=20, spacing=20, alignment=Qt.AlignmentFlag.AlignRight):
@@ -97,6 +151,7 @@ class AnvnOpButton(AnvnButton):
             self.__set_style(self.color)
         super().setDisabled(a0)
 
+
 class AnvnComboBox(QComboBox):
     def __init__(self, layout: QBoxLayout, alignment=Qt.AlignmentFlag.AlignLeft, spacing=20) -> None:
         super().__init__()
@@ -115,7 +170,7 @@ class AnvnComboBox(QComboBox):
                 border: 1px solid #dbdbdb;
                 border-radius: 10px;
                 padding: 5px 0px 5px 15px;
-                color: ''' + ('''#17abe3''' if not disabled else '''rgb(219, 219, 219)''') +''';
+                color: ''' + ('''#17abe3''' if not disabled else '''rgb(219, 219, 219)''') + ''';
                 height: 20px;
             }
             QComboBox::drop-down {
@@ -123,7 +178,7 @@ class AnvnComboBox(QComboBox):
                 width:40px;
             }
             QComboBox::down-arrow {
-                image: ''' + ('''url(:/drop_down)''' if not disabled else '''url(:/drop_down_disabled)''') +''';
+                image: ''' + ('''url(:/drop_down)''' if not disabled else '''url(:/drop_down_disabled)''') + ''';
                 height:20px;
                 width:20px;
             }
@@ -170,14 +225,17 @@ class AnvnProgressBar(QProgressBar):
             }
         ''')
 
+
 class AnvnDialog(QDialog):
     def __init__(self, title, w=600, h=600, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setModal(True)
         self.setFixedSize(QSize(w, h))
-        self.setWindowFlags(Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.Dialog)
+        self.setWindowFlags(
+            Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.Dialog)
         self.setWindowIcon(QIcon(':/logo'))
+
 
 class AnvnFrame(QFrame):
     def __init__(self, parent=None) -> None:
@@ -195,13 +253,14 @@ class AnvnFrame(QFrame):
             }
         ''')
 
+
 class AnvnInformationWidget(AnvnFrame):
     def __init__(self, title) -> None:
         super().__init__()
         self.main_layout = QVBoxLayout()
         self.title = QLabel(title)
         self.title.setWordWrap(True)
-        self.main_layout.addWidget(self.title) 
+        self.main_layout.addWidget(self.title)
         self.setLayout(self.main_layout)
         self.__set_style()
 
@@ -212,7 +271,7 @@ class AnvnInformationWidget(AnvnFrame):
         self.main_layout.addSpacing(10)
         self.main_layout.addWidget(widget)
         return self
-    
+
     def add_stretch(self, stretch):
         self.main_layout.addStretch(stretch)
 
@@ -223,6 +282,7 @@ class AnvnInformationWidget(AnvnFrame):
         self.main_layout.addWidget(label)
         label.setStyleSheet(f'color: {color}')
         return label
+
 
 class AnvnTableWidget(QTableWidget):
     def __init__(self):
@@ -253,7 +313,7 @@ class AnvnTableWidget(QTableWidget):
         rows = [r.row() for r in rows]
         columns = [c.column() for c in columns]
         return sorted(rows), sorted(columns)
-    
+
     def data2table(self, data, horizontal_header, vertical_header, digit=5):
         self.clear()
         self.setRowCount(len(vertical_header))

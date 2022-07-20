@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QListWidget, QLabel, QListWidgetItem, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QFrame, QHBoxLayout, QTextEdit, QListWidget, QLabel, QListWidgetItem, QVBoxLayout
 from PyQt5.QtCore import Qt
 from widget_utils import AnvnDeleteButton, AnvnDockWidget, AnvnOpButton
 
@@ -68,19 +68,19 @@ class AnvnDataInputWidget(AnvnDockWidget):
         return __delete_data_func
 
     def __get_data(self):
-        data_widget = QWidget()
+        data_widget = QFrame()
         data_widget.setStyleSheet('''
-            QWidget {
-                border-bottom: 1px solid #dbdbdb;
+            QFrame {
+                background-color: #fff;
             }
-            QLabel {
+            QFrame QLabel {
                 color: #1296db;
                 margin: 8px;
             }
             QTextEdit {
                 border: 1px solid #e6e6e6;
                 border-radius: 0px;
-                margin: 0px 8px 15px 8px;
+                margin: 0px 8px 2px 8px;
             }
         ''')
         data_v_layout = QVBoxLayout()

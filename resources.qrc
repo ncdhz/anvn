@@ -7,10 +7,22 @@
         <file alias="model_load">resources/icons/model_load.png</file>
     </qresource>
     <qresource>
-        <file alias="delete_gray">resources/icons/delete_gray.png</file>
+        <file alias="delete">resources/icons/delete.png</file>
     </qresource>
     <qresource>
-        <file alias="delete_red">resources/icons/delete_red.png</file>
+        <file alias="delete_cover">resources/icons/delete_cover.png</file>
+    </qresource>
+    <qresource>
+        <file alias="maximize">resources/icons/maximize.png</file>
+    </qresource>
+    <qresource>
+        <file alias="maximize_cover">resources/icons/maximize_cover.png</file>
+    </qresource>
+    <qresource>
+        <file alias="recovery">resources/icons/recovery.png</file>
+    </qresource>
+    <qresource>
+        <file alias="recovery_cover">resources/icons/recovery_cover.png</file>
     </qresource>
     <qresource>
         <file alias="add">resources/icons/add.png</file>
