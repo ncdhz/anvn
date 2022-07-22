@@ -1,14 +1,15 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
 from anvn_widget_utils import AnvnOpButton, AnvnTableWidget, AnvnComboBox
 from PyQt5.QtCore import Qt
 from anvn_utils import AnvnUtils
 from anvn_data import AnvnData
 import numpy as np
 
-class AnvnTableManagement(QWidget, AnvnData):
+class AnvnTableManagement(QFrame, AnvnData):
     def __init__(self, key, digit=5, tokenizer=None) -> None:
         super().__init__()
         self.main_layout = QVBoxLayout()
+        self.setObjectName('table_management')
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.main_layout)
         self.current_index = 0
@@ -23,6 +24,19 @@ class AnvnTableManagement(QWidget, AnvnData):
         self.table_widget = AnvnTableWidget()
         self.table_widget.itemSelectionChanged.connect(self.table_clicked)
         self.main_layout.addWidget(self.table_widget)
+        self.__set_style()
+    
+    def __set_style(self):
+        self.setStyleSheet('''
+            #table_management {
+                border: 1px solid #e0e0e0;
+                border-radius: 5px;
+            }
+            #table_op {
+                padding: 0px 10px;
+                border-radius: 5px 5px 0px 0px;
+            }
+        ''')
 
     def __remove_func(self):
         rows, columns = self.table_widget.get_selected()
@@ -60,25 +74,30 @@ class AnvnTableManagement(QWidget, AnvnData):
         pass
 
     def __init_table_op(self):
+        spacing = 5
+        table_op = QFrame()
+        table_op.setObjectName('table_op')
         layout = QHBoxLayout()
 
         remove_but = AnvnOpButton('#d81e06', 'Remove', 'remove', layout,
-                                  alignment=Qt.AlignmentFlag.AlignLeft)(self.__remove_func)
+                                  alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)(self.__remove_func)
         remove_but.setDisabled(True)
 
-        merge_cb = AnvnComboBox(layout, alignment=Qt.AlignmentFlag.AlignLeft)
+        merge_cb = AnvnComboBox(layout, alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)
         merge_cb.addItems(self.merge_option.keys())
         merge_cb.setCurrentText(self.merge_key)
         merge_cb.setDisabled(True)
         merge_cb.currentTextChanged.connect(self.__merge_type_func)
 
-        merge_rows_but = AnvnOpButton('#17abe3', 'Merge Rows', 'merge_rows', layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__merge_func('merge_rows'))
+        merge_rows_but = AnvnOpButton('#17abe3', 'Merge Rows', 'merge_rows', layout, alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)(self.__merge_func('merge_rows'))
         merge_rows_but.setDisabled(True)
-        merge_columns_but = AnvnOpButton('#17abe3', 'Merge Columns', 'merge_columns', layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__merge_func('merge_columns'))
+        merge_columns_but = AnvnOpButton('#17abe3', 'Merge Columns', 'merge_columns', layout, alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)(self.__merge_func('merge_columns'))
         merge_columns_but.setDisabled(True)
         
         layout.addStretch(0)
-        self.main_layout.addLayout(layout)
+
+        table_op.setLayout(layout)
+        self.main_layout.addWidget(table_op)
         return remove_but, merge_cb, merge_rows_but, merge_columns_but
 
     def __merge_type_func(self, text):

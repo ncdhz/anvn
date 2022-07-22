@@ -1,10 +1,91 @@
-from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar, QDialog, QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QListView, QProgressBar, QDialog, QFrame, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QWidget, QStackedLayout, QHBoxLayout
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QSize, QEvent
 from anvn_resources import *
 
+class AnvnDockTitleBar(QFrame):
+    def __init__(self, title, title_color='rgb(226, 192, 141)'):
+        super(AnvnDockTitleBar, self).__init__()
+        self.title_color = title_color
+        self.title = title
+        self.maximized_func = None
+        self.reduction_func = None
+        self.stacked_title = QStackedLayout()
+        self.setLayout(self.stacked_title)
+
+        self.only_title = self.__init_only_title()
+        self.title_and_buttons = self.__init_title_and_buttons()
+        self.stacked_title.setCurrentWidget(self.only_title)
+        self.double_click_func = None
+        self.__set_style()
+
+    def __init_only_title(self):
+        only_title = QWidget()
+        title_label = QLabel(self.title)
+        only_title_layout = QHBoxLayout()
+        only_title_layout.addWidget(title_label)
+        only_title.setLayout(only_title_layout)
+        only_title_layout.setContentsMargins(0, 0, 0, 0)
+        self.stacked_title.addWidget(only_title)
+        return only_title
+    
+    def set_double_click_func(self, func):
+        self.double_click_func = func
+
+    def mouseDoubleClickEvent(self, a0):
+        if self.double_click_func is not None:
+            self.double_click_func()
+
+    def __maximized_func(self, maximize_recovery):
+        def __mf():
+            if self.maximized_func is not None:
+                self.maximized_func(maximize_recovery)
+        return __mf
+
+    def set_maximized_func(self, func):
+        self.maximized_func = func
+    
+    def set_reduction_func(self, func):
+        self.reduction_func = func
+
+    def __reduction_func(self):
+        if self.reduction_func is not None:
+            self.reduction_func()
+
+    def __init_title_and_buttons(self):
+        title_and_buttons = QWidget()
+        title_and_buttons_layout = QHBoxLayout()
+        title_label = QLabel(self.title)
+        title_and_buttons_layout.addWidget(title_label)
+        title_and_buttons_layout.addStretch(0)
+        maximize_recovery = AnvnMaximizeRecoveryButton()
+        maximize_recovery(self.__maximized_func(maximize_recovery))
+        title_and_buttons_layout.addWidget(maximize_recovery)
+        reduction = AnvnDeleteButton()(self.__reduction_func)
+        title_and_buttons_layout.addWidget(reduction)
+        title_and_buttons.setLayout(title_and_buttons_layout)
+        self.stacked_title.addWidget(title_and_buttons)
+        title_and_buttons_layout.setContentsMargins(0, 0, 0, 0)
+        return title_and_buttons
+
+    def choice_only_title(self):
+        self.stacked_title.setCurrentWidget(self.only_title)
+    
+    def choice_title_and_buttons(self):
+        self.stacked_title.setCurrentWidget(self.title_and_buttons)
+
+    def __set_style(self):
+        self.setStyleSheet('''
+            QFrame {
+                padding: 0px 5px;
+            }
+            QLabel {
+                color: ''' + self.title_color + ''';
+            }
+        ''')
+
 class AnvnDockWidget(QDockWidget):
-    def __init__(self, title='', parent=None):
+    def __init__(self, title='', parent=None, title_color='rgb(226, 192, 141)'):
         super(AnvnDockWidget, self).__init__(title, parent)
         self.setStyleSheet('''
             QDockWidget {
@@ -12,48 +93,35 @@ class AnvnDockWidget(QDockWidget):
             }
         ''')
         self.is_floating = False
-        self.title = title
-        self.setTitleBarWidget(self.__get_title_bar())
-    
+        self.title_bar = AnvnDockTitleBar(title, title_color)
+        self.title_bar.set_maximized_func(self.__maximized_func)
+        self.title_bar.set_reduction_func(self.__reduction_func)
+
+        self.setTitleBarWidget(self.title_bar)
+
     def moveEvent(self, a0):
         super().moveEvent(a0)
         if self.isFloating() != self.is_floating:
+            if self.isFloating():
+                self.title_bar.choice_title_and_buttons()
+            else:
+                self.title_bar.choice_only_title()
             self.is_floating = self.isFloating()
-            self.setTitleBarWidget(self.__get_title_bar())
+    
+    def set_title_double_clicked(self, func):
+        self.title_bar.set_double_click_func(func)
 
     def __reduction_func(self):
         self.setFloating(False)
 
     def __maximized_func(self, button):
-        def mf():
-            if self.isMaximized():
-                self.showNormal()
-                button.show_maximize()
-            else:
-                self.showMaximized()
-                button.show_recovery()
-        return mf
-    
-    def __get_title_bar(self):
-        title_bar = QWidget()
-        title_bar_layout = QHBoxLayout()
-        title = QLabel(self.title)
-        title_bar_layout.addWidget(title)
-        title.setStyleSheet('''
-            QLabel {
-                color: rgb(226, 192, 141);
-            }
-        ''')
-        title_bar_layout.addStretch(0)
-        if self.is_floating:
-            maximize_recovery = AnvnMaximizeRecoveryButton()
-            maximize_recovery(self.__maximized_func(maximize_recovery))
-            title_bar_layout.addWidget(maximize_recovery)
-            close = AnvnDeleteButton()(self.__reduction_func)
-            title_bar_layout.addWidget(close)
-        title_bar.setLayout(title_bar_layout)
-        return title_bar
-    
+        if self.isMaximized():
+            self.showNormal()
+            button.show_maximize()
+        else:
+            self.showMaximized()
+            button.show_recovery()
+
 class AnvnButton(QPushButton):
     def __init__(self):
         super(AnvnButton, self).__init__()
@@ -131,8 +199,8 @@ class AnvnOpButton(AnvnButton):
             QPushButton {
                 background: #ffffff;
                 border: 1px solid #dbdbdb;
-                border-radius: 10px;
-                padding: 5px 15px;
+                border-radius: 5px;
+                padding: 5px 10px;
                 color: ''' + color + ''';
             }
             QPushButton:hover {
@@ -167,7 +235,7 @@ class AnvnComboBox(QComboBox):
             QComboBox {
                 background: #ffffff;
                 border: 1px solid #dbdbdb;
-                border-radius: 10px;
+                border-radius: 5px;
                 padding: 5px 0px 5px 15px;
                 color: ''' + ('''#17abe3''' if not disabled else '''rgb(219, 219, 219)''') + ''';
                 height: 20px;
@@ -293,15 +361,17 @@ class AnvnTableWidget(QTableWidget):
         self.setStyleSheet('''
             QTableWidget {
                 border-style: none;
+                background: #f7f7f9;
+                padding: 10px;
+                border-radius: 0px 0px 6px 6px;
             }
             QHeaderView {
-                background: #ffffff;
+                background: #f7f7f9;
             }
             QHeaderView::section {
                 border: 1px solid #dbdbdb;
                 background: #e6e6e6;
             }
-
         ''')
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.verticalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)

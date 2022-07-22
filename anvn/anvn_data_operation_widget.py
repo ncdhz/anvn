@@ -139,7 +139,6 @@ class AnvnDODialog(AnvnDialog):
             }
         ''')
 
-
 class AnvnLMOWidget(QWidget):
     def __init__(self) -> None:
         super(AnvnLMOWidget, self).__init__()
@@ -359,40 +358,41 @@ class AnvnMMOWidget(QWidget):
                      'Head analysis error.', f'The selected head is out of range [0, {len(self.outputs[self.key][0][0]) - 1}].', 'Head is empty.'], ok_callback=self.__set_heads, number=len(self.outputs[self.key][0][0]), data=self.current_heads).show()
 
     def __init_data_choice(self):
+        spacing = 5
         data_choice_layout = QHBoxLayout()
         data_num = AnvnOpButton('#eeb174', '0', 'data_num', data_choice_layout,
-                                alignment=Qt.AlignmentFlag.AlignLeft)
+                                alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)
         data_num.setToolTip('Select data')
         if len(self.all_ots) == 1:
             data_num.setDisabled(True)
         else:
             data_num(self.__data_num_func)
 
-        keys_combo_box = AnvnComboBox(layout=data_choice_layout)
+        keys_combo_box = AnvnComboBox(layout=data_choice_layout, spacing=spacing)
         keys_combo_box.addItems(self.output_keys)
 
         head_but = None
         layer_but = None
         if self.attentions in self.output_keys or self.hidden_states in self.output_keys:
             layer_but = AnvnOpButton(
-                '#c8db8c', '--', 'layer', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__layers_func)
+                '#c8db8c', '--', 'layer', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)(self.__layers_func)
             layer_but.setToolTip('Select layer')
         if self.attentions in self.output_keys:
             head_but = AnvnOpButton(
-                '#7dc5eb', '--', 'head', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft)(self.__heads_func)
+                '#7dc5eb', '--', 'head', data_choice_layout, alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)(self.__heads_func)
             head_but.setToolTip('Select head')
 
-        decimal_digit = AnvnComboBox(layout=data_choice_layout)
+        decimal_digit = AnvnComboBox(layout=data_choice_layout, spacing=spacing)
         decimal_digit.setToolTip('Select decimal digit')
         decimal_digit.addItems(['1', '2', '3', '4', '5', '6', '7', '8', '9'])
         decimal_digit.setCurrentText(str(self.digit))
         decimal_digit.currentTextChanged.connect(self.__decimal_digit_func)
 
         revoke_but = AnvnOpButton('#7dc5eb', 'Revoke', 'revoke', data_choice_layout,
-                                  alignment=Qt.AlignmentFlag.AlignLeft)(self.__revoke_func)
+                                  alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)(self.__revoke_func)
         revoke_but.setDisabled(True)
         forward_but = AnvnOpButton('#7dc5eb', 'Forward', 'forward', data_choice_layout,
-                                   alignment=Qt.AlignmentFlag.AlignLeft)(self.__forward_func)
+                                   alignment=Qt.AlignmentFlag.AlignLeft, spacing=spacing)(self.__forward_func)
         forward_but.setDisabled(True)
 
         self.main_layout.addLayout(data_choice_layout)
