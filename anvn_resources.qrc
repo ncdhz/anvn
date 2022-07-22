@@ -69,4 +69,10 @@
     <qresource>
         <file alias="show">resources/icons/show.png</file>
     </qresource>
+    <qresource>
+        <file alias="merge_columns">resources/icons/merge_columns.png</file>
+    </qresource>
+    <qresource>
+        <file alias="merge_rows">resources/icons/merge_rows.png</file>
+    </qresource>
 </RCC>

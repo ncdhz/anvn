@@ -1,14 +1,9 @@
-from widget_utils import AnvnDockWidget
-from table_management import AnvnTableManagement
+from anvn_widget_utils import AnvnDockWidget
+from anvn_table_management import AnvnTableManagement
 from PyQt5.QtWidgets import QListWidget, QMainWindow, QListWidgetItem
 from PyQt5.QtCore import Qt
+from anvn_chart_management import AnvnChartManagement
 from anvn_data import AnvnData
-
-class AnvnVisualization(AnvnDockWidget):
-    def __init__(self, data, title, parent=None):
-        super().__init__(title, parent)
-        self.data = data
-        self.setStatusTip(title)
 
 class AnvnDataVisualizationWidget(AnvnDockWidget):
     def __init__(self, title='Data Visualization ', parent=None):
@@ -35,11 +30,14 @@ class AnvnDataVisualizationWidget(AnvnDockWidget):
     
     def __get_data_item(self):
         main_window = QMainWindow()
-        
+        main_window.setMinimumHeight(200)
+        main_window.setStyleSheet('''
+            QMainWindow {background-color: #fafafa;}
+        ''')
         index = self.data_list.count()
         data = self.datas[index]
-        data_widget = AnvnVisualization(data, title=f'{data.get_key()}:{index + 1}')
-        main_window.addDockWidget(Qt.DockWidgetArea.AllDockWidgetAreas, data_widget)
+        data_widget = AnvnChartManagement(data, title=f'{data.get_key()}:{index + 1}')
+        main_window.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, data_widget)
         data_item = QListWidgetItem()
         data_item.setSizeHint(main_window.sizeHint())
         return data_item, main_window

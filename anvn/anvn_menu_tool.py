@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtGui import QIcon
-from resources import *
+from anvn_resources import *
 from PyQt5.QtWidgets import QMainWindow
-from widget import AnvnTabWidget
+from anvn_page_widget import AnvnTabWidget
 
 class AnvnAction:
     def __init__(self, main_window: QMainWindow, central_widget: AnvnTabWidget) -> None:

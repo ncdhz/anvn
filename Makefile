@@ -5,7 +5,7 @@ upload:
 	python setup.py upload
 
 pyrcc:
-	pyrcc5 -o anvn/resources.py resources.qrc
+	pyrcc5 -o anvn/anvn_resources.py anvn_resources.qrc
 
 sdocs:
 	docsify serve ./docs

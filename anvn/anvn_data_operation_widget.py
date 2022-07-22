@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QTextEdit, QStackedWidget
-from widget_utils import AnvnDockWidget, AnvnOpButton, AnvnComboBox, AnvnProgressBar, AnvnDialog, AnvnInformationWidget, AnvnFrame
+from anvn_widget_utils import AnvnDockWidget, AnvnOpButton, AnvnComboBox, AnvnProgressBar, AnvnDialog, AnvnInformationWidget, AnvnFrame
 from PyQt5.QtCore import Qt
 from anvn_utils import AnvnUtils
-from table_management import AnvnAttentionTableManagement, AnvnStateTableManagement, AnvnPoolerTableManagement
-
+from anvn_table_management import AnvnAttentionsTableManagement, AnvnHiddenStatesTableManagement, AnvnLastHiddenStateTableManagement, AnvnPoolerTableManagement
 
 class AnvnDODialog(AnvnDialog):
     def __init__(self, title, help, input, ok_callback, result_message, number, data, h=470, parent=None) -> None:
@@ -307,14 +306,14 @@ class AnvnMMOWidget(QWidget):
 
         data, ots, iis = self.__get_table_data()
         if self.key == self.attentions:
-            table_mangement = AnvnAttentionTableManagement(
+            table_mangement = AnvnAttentionsTableManagement(
                 data, ots, iis, self.current_data_num, self.current_layers, self.current_heads, key=self.key, digit=self.digit, tokenizer=self.tokenizer)
         elif self.key == self.hidden_states:
-            table_mangement = AnvnStateTableManagement(
+            table_mangement = AnvnHiddenStatesTableManagement(
                 data, ots, iis, self.current_data_num, self.current_layers, key=self.key, digit=self.digit, tokenizer=self.tokenizer)
         elif self.key == self.last_hidden_state:
-            table_mangement = AnvnStateTableManagement(
-                data, ots, iis, self.current_data_num, key=self.key, layers=None, digit=self.digit, tokenizer=self.tokenizer)
+            table_mangement = AnvnLastHiddenStateTableManagement(
+                data, ots, iis, self.current_data_num, key=self.key, digit=self.digit, tokenizer=self.tokenizer)
         else:
             table_mangement = AnvnPoolerTableManagement(
                 data, self.current_data_num, key=self.key, digit=self.digit)
@@ -478,9 +477,9 @@ class AnvnMMOWidget(QWidget):
             self.__add_tabel_widget()
 
 
-class AnvnModelOperationWidget(AnvnDockWidget):
+class AnvnDataOperationWidget(AnvnDockWidget):
     def __init__(self, title='Model Operation', parent=None, callback_func=None):
-        super(AnvnModelOperationWidget, self).__init__(title, parent)
+        super(AnvnDataOperationWidget, self).__init__(title, parent)
         self.outputs = None
         self.tokenizer = None
         self.all_ots = None

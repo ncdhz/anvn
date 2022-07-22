@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QFrame, QHBoxLayout, QTextEdit, QListWidget, QLabel, QListWidgetItem, QVBoxLayout
 from PyQt5.QtCore import Qt
-from widget_utils import AnvnDeleteButton, AnvnDockWidget, AnvnOpButton
+from anvn_widget_utils import AnvnDeleteButton, AnvnDockWidget, AnvnOpButton
 
 class AnvnDataInputWidget(AnvnDockWidget):
 
