@@ -17,13 +17,16 @@ class AnvnDataVisualizationWidget(AnvnDockWidget):
                 border-radius: 5px;
                 margin: 0px 10px 10px 10px;
             }
+            QListWidget::item {
+                border-style: none;
+                border-radius: 5px;
+            }
         ''')
         self.last_hidden_state = last_hidden_state
         self.pooler_output = pooler_output
         self.hidden_states = hidden_states
         self.attentions = attentions
         self.data_visualization_list = []
-        self.datas = []
         self.setMinimumWidth(300)
         self.setWidget(self.data_list)
 
@@ -32,18 +35,24 @@ class AnvnDataVisualizationWidget(AnvnDockWidget):
         self.add_data(data)
 
     def add_data(self, data):
-        self.datas.append(data)
-        self.__add_data_item()
+        self.__add_data_item(data)
 
-    def __add_data_item(self):
-        data_item, data_widget = self.__get_data_item()
+    def __add_data_item(self, data):
+        data_item, data_widget = self.__get_data_item(data)
         self.data_list.addItem(data_item)
         self.data_list.setItemWidget(data_item, data_widget)
     
-    def __get_data_item(self):
+    def __double_click_func(self, node):
+        for dv in self.data_visualization_list:
+            if dv is node:
+                dv.open()
+            else:    
+                dv.clear()
         
+
+    def __get_data_item(self, data):
+
         index = self.data_list.count()
-        data = self.datas[index]
         title = f'{data.get_key()}:{index + 1}'
         
         if data.get_key() == self.last_hidden_state:
@@ -54,7 +63,9 @@ class AnvnDataVisualizationWidget(AnvnDockWidget):
             data_widget = AnvnHiddenStatesChartManagement(data, title=title)
         elif data.get_key() == self.attentions:
             data_widget = AnvnAttentionsChartManagement(data, title=title)
-
+        
+        data_widget.set_title_double_clicked(self.__double_click_func)
+        self.data_visualization_list.append(data_widget)
         
         data_item = QListWidgetItem()
 

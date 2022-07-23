@@ -248,14 +248,13 @@ class AnvnMMOWidget(QWidget):
         self.main_layout = QVBoxLayout()
 
         self.data_num_but, self.key_but, self.layer_but, self.head_but, self.digit_but, self.revoke_but, self.forward_but = self.__init_data_choice()
-
+        self.main_layout.addSpacing(10)
         self.setLayout(self.main_layout)
 
         self.table_main = QStackedWidget()
-        self.main_layout.addSpacing(15)
         self.main_layout.addWidget(self.table_main)
         self.current_table = -1
-
+        self.main_layout.addSpacing(10)
         self.__init_data_show()
 
         self.main_layout.addStretch(0)

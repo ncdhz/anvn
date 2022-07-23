@@ -4,13 +4,14 @@ from PyQt5.QtCore import Qt, QSize, QEvent
 from anvn_resources import *
 
 class AnvnDockTitleBar(QFrame):
-    def __init__(self, title, title_color='rgb(226, 192, 141)'):
+    def __init__(self, title, color='rgb(226, 192, 141)', background=None):
         super(AnvnDockTitleBar, self).__init__()
-        self.title_color = title_color
+        self.color = color
         self.title = title
         self.maximized_func = None
         self.reduction_func = None
         self.stacked_title = QStackedLayout()
+        self.background = background
         self.setLayout(self.stacked_title)
 
         self.only_title = self.__init_only_title()
@@ -75,17 +76,29 @@ class AnvnDockTitleBar(QFrame):
         self.stacked_title.setCurrentWidget(self.title_and_buttons)
 
     def __set_style(self):
-        self.setStyleSheet('''
+        frame_style = ''' 
             QFrame {
                 padding: 0px 5px;
             }
+        '''
+        if self.background is not None:
+            frame_style = '''
+                QFrame {
+                    padding: 0px 5px;
+                    background:'''+ self.background +''';
+                }
+            '''
+
+        label_style = '''    
             QLabel {
-                color: ''' + self.title_color + ''';
+                color: ''' + self.color + ''';
             }
-        ''')
+        '''
+
+        self.setStyleSheet(frame_style + label_style)
 
 class AnvnDockWidget(QDockWidget):
-    def __init__(self, title='', parent=None, title_color='rgb(226, 192, 141)'):
+    def __init__(self, title='', parent=None, title_color='rgb(226, 192, 141)', title_background = None):
         super(AnvnDockWidget, self).__init__(title, parent)
         self.setStyleSheet('''
             QDockWidget {
@@ -93,7 +106,7 @@ class AnvnDockWidget(QDockWidget):
             }
         ''')
         self.is_floating = False
-        self.title_bar = AnvnDockTitleBar(title, title_color)
+        self.title_bar = AnvnDockTitleBar(title, title_color, title_background)
         self.title_bar.set_maximized_func(self.__maximized_func)
         self.title_bar.set_reduction_func(self.__reduction_func)
 
@@ -361,16 +374,52 @@ class AnvnTableWidget(QTableWidget):
         self.setStyleSheet('''
             QTableWidget {
                 border-style: none;
-                background: #f7f7f9;
-                padding: 10px;
+                padding: 0px 15px 20px 15px;
                 border-radius: 0px 0px 6px 6px;
+                gridline-color : #fff;
             }
             QHeaderView {
-                background: #f7f7f9;
+                background: #ffffff;
             }
             QHeaderView::section {
-                border: 1px solid #dbdbdb;
-                background: #e6e6e6;
+                border-style: none;
+                background: #dedfe1;
+            }
+
+            QTableWidget::item::selected {
+                background: #cccccc;
+            }
+
+            QScrollBar:horizontal{
+                height:8px;  
+                border-style:flat;
+                border:0px;
+                height:12px; 
+            } 
+            QScrollBar::handle:horizontal{
+                min-width:91px; 
+                background: #dedfe1;
+                border-style:flat;
+            }
+            QScrollBar::handle:horizontal::hover{ 
+                background: #c8c9cc;
+            }
+            QScrollBar::handle:horizontal::pressed{ 
+                background: #c8c9cc;
+            }
+            QScrollBar::sub-page:horizontal {
+                background: #fff;
+                border-style:flat;
+            }
+            QScrollBar::add-page:horizontal {
+                background: #fff;
+                border-style:flat;
+            }
+            QScrollBar::sub-line:horizontal {
+                background: #fff;
+            }
+            QScrollBar::add-line:horizontal{
+                background: #fff;
             }
         ''')
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)

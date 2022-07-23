@@ -33,7 +33,7 @@ class AnvnTableManagement(QFrame, AnvnData):
                 border-radius: 5px;
             }
             #table_op {
-                padding: 0px 10px;
+                padding: 10px 10px 0px 10px;
                 border-radius: 5px 5px 0px 0px;
             }
         ''')
