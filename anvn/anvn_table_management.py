@@ -28,11 +28,11 @@ class AnvnTableManagement(QFrame):
             table = self.tables_widget.currentWidget()
             rows, columns = table.get_selected()
             if callback == self.remove:
-                self.data.ops.insert(self.data.op_index + 1, ((self.remove, rows, columns), self.data.ops[self.data.op_index][1]))
+                self.data.ops.insert(self.data.op_index + 1, ((self.remove, rows, columns), self.data.get_op()[1]))
             elif callback == self.fuse_rows:
-                self.data.ops.insert(self.data.op_index + 1, ((self.fuse_rows, rows, self.fuse_cb.currentText()), self.data.ops[self.data.op_index][1]))
+                self.data.ops.insert(self.data.op_index + 1, ((self.fuse_rows, rows, self.fuse_cb.currentText()), self.data.get_op()[1]))
             elif callback == self.fuse_columns:
-                self.data.ops.insert(self.data.op_index + 1, ((self.fuse_columns, columns, self.fuse_cb.currentText()), self.data.ops[self.data.op_index][1]))
+                self.data.ops.insert(self.data.op_index + 1, ((self.fuse_columns, columns, self.fuse_cb.currentText()), self.data.get_op()[1]))
             elif callback == self.down:
                 self.down(self.data_layer_head_cb.currentText())
             elif callback == self.up:
@@ -42,7 +42,7 @@ class AnvnTableManagement(QFrame):
             self.data2table()
         return op
 
-    def fuse_rows(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, rows, index, fuse_key):
+    def fuse_rows(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, rows, fuse_key):
         pass
 
     def fuse_columns(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, columns, fuse_key):
@@ -52,7 +52,7 @@ class AnvnTableManagement(QFrame):
         pass
 
     def down(self, key):
-        op1 = self.data.ops[self.data.op_index][1].copy()
+        op1 = self.data.get_op()[1].copy()
         if key == self.config.dim_name.data_name:
             op1[1] -= 1
         elif key == self.config.dim_name.layer_name:
@@ -63,7 +63,7 @@ class AnvnTableManagement(QFrame):
         self.data.ops.insert(self.data.op_index + 1, (None, op1))
 
     def up(self, key):
-        op1 = self.data.ops[self.data.op_index][1].copy()
+        op1 = self.data.get_op()[1].copy()
         if key == self.config.dim_name.data_name:
             op1[1] += 1
         elif key == self.config.dim_name.layer_name:
@@ -180,10 +180,14 @@ class AnvnTableManagement(QFrame):
 
         return AnvnTableData(data, basic_data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, model_output.get_tokenizers(), config)
     
-    def set_digit(self):
-        pass
+    def set_digit(self, digit):
+        self.data.set_decimal_digit(digit)
+        self.tables_widget.currentWidget().data2table(digit=digit)
 
     def get_data(self):
+        return self.tables_widget.currentWidget().get_data()
+
+    def get_basic_data(self):
         return self.data
 
     def __set_style(self):
@@ -200,15 +204,16 @@ class AnvnTableManagement(QFrame):
     
     def data2table(self):
         self.__refresh_disable()
-
         data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids = self.data.copy_op_message()
 
         for i in range(len(self.data.ops)):
             if self.data.ops[i][0] is not None:
                 op = self.data.ops[i][0]
                 data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids = op[0](data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, i, *op[1:])
-
-        return data, horizontal_headers, vertical_headers
+        table = AnvnTableWidget(data, horizontal_headers, vertical_headers, self.data.get_key())
+        table.itemSelectionChanged.connect(self.table_selection_func(table))
+        self.add_table(table)
+        return table
     
     def __refresh_disable(self, name=None):
         if name is None:
@@ -256,6 +261,7 @@ class AnvnTableManagement(QFrame):
         self.remove_current_after_table()
         self.tables_widget.addWidget(table)
         self.tables_widget.setCurrentWidget(table)
+        self.handle.emit()
 
     def is_start(self):
         return self.tables_widget.currentIndex() == 0
@@ -270,6 +276,10 @@ class AnvnTableManagement(QFrame):
         self.tables_widget.setCurrentIndex(index - 1)
         self.data.set_op_index(index - 1)
         self.__refresh_disable()
+        widget = self.tables_widget.currentWidget()
+        if widget.get_digit() != self.data.get_decimal_digit():
+            widget.data2table(digit=self.data.get_decimal_digit())
+        self.handle.emit()
         return True
     
     def forward(self):
@@ -278,7 +288,11 @@ class AnvnTableManagement(QFrame):
         index = self.tables_widget.currentIndex()
         self.tables_widget.setCurrentIndex(index + 1)
         self.data.set_op_index(index + 1)
+        widget = self.tables_widget.currentWidget()
+        if widget.get_digit() != self.data.get_decimal_digit():
+            widget.data2table(digit=self.data.get_decimal_digit())
         self.__refresh_disable()
+        self.handle.emit()
         return True
 
     def remove_current_after_table(self):
@@ -315,11 +329,8 @@ class AnvnAttentionsTableManagement(AnvnTableManagement):
         super(AnvnAttentionsTableManagement, self).__init__(data)
     
     def data2table(self):
-        data, horizontal_headers, vertical_headers = super().data2table()
-        table = AnvnTableWidget()
-        table.itemSelectionChanged.connect(self.table_selection_func(table))
-        table.data2table(data[self.data.get_model_tokenizer_key()][self.data.get_data_index()][self.data.get_layer_index()][self.data.get_head_index()], horizontal_headers[self.data.get_model_tokenizer_key()][self.data.get_data_index()], vertical_headers[self.data.get_model_tokenizer_key()][self.data.get_data_index()], self.data.get_decimal_digit())
-        self.add_table(table)
+        table = super().data2table()
+        table.data2table((self.data.get_model_tokenizer_key(), self.data.get_data_index(), self.data.get_layer_index(), self.data.get_head_index()), (self.data.get_model_tokenizer_key(), self.data.get_data_index()), (self.data.get_model_tokenizer_key(), self.data.get_data_index()), self.data.get_decimal_digit())
 
     def remove(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, rows, columns):
         di = self.data.get_data_index(index)
@@ -332,7 +343,7 @@ class AnvnAttentionsTableManagement(AnvnTableManagement):
         data[key][di] = np.delete(data[key][di], columns, axis=-1)
         return data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids
     
-    def fuse_rows(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, rows, index, fuse_key):
+    def fuse_rows(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, rows, fuse_key):
 
         di = self.data.get_data_index(index)
         key = self.data.get_model_tokenizer_key(index)
@@ -363,7 +374,7 @@ class AnvnAttentionsTableManagement(AnvnTableManagement):
         columns_delete_first, columns_first = AnvnUtils.delete_first(columns)
         columns_merge = data[key][di][:, :, :, columns]
         columns_merge = AnvnUtils.get_fuse_op()[fuse_key](columns_merge, -1)
-        data[key][di] = np.delete(data[di], columns_delete_first, axis=-1)
+        data[key][di] = np.delete(data[key][di], columns_delete_first, axis=-1)
         data[key][di][:, :, :, columns_first] = columns_merge
 
         horizontal_headers[key][di] = np.delete(horizontal_headers[key][di], columns_delete_first, axis=0)
@@ -382,11 +393,8 @@ class AnvnHiddenStatesTableManagement(AnvnTableManagement):
         super(AnvnHiddenStatesTableManagement, self).__init__(data)
     
     def data2table(self):
-        data, horizontal_headers, vertical_headers = super().data2table()
-        table = AnvnTableWidget()
-        table.itemSelectionChanged.connect(self.table_selection_func(table))
-        table.data2table(data[self.data.get_model_tokenizer_key()][self.data.get_data_index()][self.data.get_layer_index()], horizontal_headers[self.data.get_model_tokenizer_key()][self.data.get_data_index()], vertical_headers[self.data.get_model_tokenizer_key()][self.data.get_data_index()], self.data.get_decimal_digit())
-        self.add_table(table)
+        table = super().data2table()
+        table.data2table((self.data.get_model_tokenizer_key(), self.data.get_data_index(), self.data.get_layer_index()), (self.data.get_model_tokenizer_key(), self.data.get_data_index()), (self.data.get_model_tokenizer_key(), self.data.get_data_index()), self.data.get_decimal_digit())
     
     def remove(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, rows, columns):
         di = self.data.get_data_index(index)
@@ -401,7 +409,7 @@ class AnvnHiddenStatesTableManagement(AnvnTableManagement):
 
         return data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids
 
-    def fuse_rows(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, rows, index, fuse_key):
+    def fuse_rows(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, rows, fuse_key):
         di = self.data.get_data_index(index)
         key = self.data.get_model_tokenizer_key(index)
 
@@ -443,11 +451,8 @@ class AnvnLastHiddenStateTableManagement(AnvnTableManagement):
         super(AnvnLastHiddenStateTableManagement, self).__init__(data)
     
     def data2table(self):
-        data, horizontal_headers, vertical_headers = super().data2table()
-        table = AnvnTableWidget()
-        table.itemSelectionChanged.connect(self.table_selection_func(table))
-        table.data2table(data[self.data.get_model_tokenizer_key()][self.data.get_data_index()], horizontal_headers[self.data.get_model_tokenizer_key()][self.data.get_data_index()], vertical_headers[self.data.get_model_tokenizer_key()][self.data.get_data_index()], self.data.get_decimal_digit())
-        self.add_table(table)
+        table = super().data2table()
+        table.data2table((self.data.get_model_tokenizer_key(), self.data.get_data_index()), (self.data.get_model_tokenizer_key(), self.data.get_data_index()), (self.data.get_model_tokenizer_key(), self.data.get_data_index()), self.data.get_decimal_digit())
     
     def remove(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, rows, columns):
         di = self.data.get_data_index(index)
@@ -461,7 +466,7 @@ class AnvnLastHiddenStateTableManagement(AnvnTableManagement):
 
         return data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids
     
-    def fuse_rows(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, rows, index, fuse_key):
+    def fuse_rows(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, rows, fuse_key):
         di = self.data.get_data_index(index)
         key = self.data.get_model_tokenizer_key(index)
 
@@ -503,11 +508,8 @@ class AnvnPoolerTableManagement(AnvnTableManagement):
         super(AnvnPoolerTableManagement, self).__init__(data)
 
     def data2table(self):
-        data, horizontal_headers, vertical_headers = super().data2table()
-        table = AnvnTableWidget()
-        table.itemSelectionChanged.connect(self.table_selection_func(table))
-        table.data2table(data[self.data.get_model_tokenizer_key()], horizontal_headers[self.data.get_model_tokenizer_key()], vertical_headers, self.data.get_decimal_digit())
-        self.add_table(table)
+        table = super().data2table()
+        table.data2table((self.data.get_model_tokenizer_key(),), (self.data.get_model_tokenizer_key(),), [], self.data.get_decimal_digit())
     
     def remove(self, data, horizontal_headers, vertical_headers, horizontal_ids, vertical_ids, index, rows, columns):
         key = self.data.get_model_tokenizer_key(index)
@@ -523,7 +525,7 @@ class AnvnPoolerTableManagement(AnvnTableManagement):
         columns_delete_first, columns_first = AnvnUtils.delete_first(columns)
         columns_merge = data[key][:, columns]
         columns_merge = AnvnUtils.get_fuse_op()[fuse_key](columns_merge, -1)
-        data = np.delete(data[key], columns_delete_first, axis=-1)
+        data[key] = np.delete(data[key], columns_delete_first, axis=-1)
         data[key][:, columns_first] = columns_merge
         
         hors = horizontal_headers[key][columns]

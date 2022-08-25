@@ -82,20 +82,24 @@ class AnvnWidget(QMainWindow):
     
     def __data_operation_func(self):
         mmo = self.data_operation_widget.injection_data(self.model_run.get_model_output())
-        mmo.handle.connect(self.__add_visualization_func)
+        mmo.handle.connect(self.__add_visualization_func(mmo.get_config()))
+
+    
+
+    def __add_visualization_func(self, config):
+        def av(table_data):
+            if self.data_visualization_widget is None:
+                self.data_visualization_widget = AnvnDataVisualizationWidget(config)
+                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.data_visualization_widget)
+                self.data_visualization_widget.handle.connect(self.__remove_visualization_func)
+
+            self.data_visualization_widget.data_monitor(table_data)
+        return av
 
     def __remove_visualization_func(self):
         if self.data_visualization_widget is not None:
             self.removeDockWidget(self.data_visualization_widget)
             self.data_visualization_widget = None
-
-    def __add_visualization_func(self, table):
-        if self.data_visualization_widget is None:
-            self.data_visualization_widget = AnvnDataVisualizationWidget()
-            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.data_visualization_widget)
-            self.data_visualization_widget.handle.connect(self.__remove_visualization_func)
-
-        self.data_visualization_widget.data_monitor(table)
 
     def __get_input_data(self, data_list):
         self.data_input_widget.set_run_disabled(True, 'Waiting for model execution')

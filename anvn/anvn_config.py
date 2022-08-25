@@ -24,7 +24,14 @@ class AnvnConfig:
             self.data_name = AnvnConfig.AnvnDimName.data_name
             self.layer_name = AnvnConfig.AnvnDimName.layer_name
             self.head_name = AnvnConfig.AnvnDimName.head_name
+        
+    class AnvnTable:
+        decimal_digit = 5
+
+        def __init__(self) -> None:
+            self.decimal_digit = AnvnConfig.AnvnTable.decimal_digit
     
     def __init__(self):
         self.model_output = self.AnvnModelOutput()
         self.dim_name = self.AnvnDimName()
+        self.table = self.AnvnTable()

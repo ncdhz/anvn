@@ -1,15 +1,14 @@
 from anvn_widget_utils import AnvnDockWidget
-from anvn_table_management import AnvnTableManagement
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt, pyqtSignal
 from anvn_chart_management import AnvnLastHiddenStateChartManagement, AnvnPoolerChartManagement, AnvnHiddenStatesChartManagement, AnvnAttentionsChartManagement
-from anvn_data import AnvnTableData
+from anvn_data import AnvnVisualData
 
 class AnvnDataVisualizationWidget(AnvnDockWidget):
 
     handle = pyqtSignal()
 
-    def __init__(self, title='Data Visualization ', last_hidden_state='last_hidden_state', pooler_output='pooler_output', hidden_states='hidden_states', attentions='attentions'):
+    def __init__(self, config, title='Data Visualization'):
         super(AnvnDataVisualizationWidget, self).__init__(title)
         self.setStatusTip(title)
         self.data_list = QListWidget(self)
@@ -23,17 +22,13 @@ class AnvnDataVisualizationWidget(AnvnDockWidget):
                 border-style: none;
             }
         ''')
-        self.last_hidden_state = last_hidden_state
-        self.pooler_output = pooler_output
-        self.hidden_states = hidden_states
-        self.attentions = attentions
+        self.config = config
         self.data_visualization_list = []
         self.setMinimumWidth(500)
         self.setWidget(self.data_list)
 
-    def data_monitor(self, table: AnvnTableManagement):
-        data = AnvnTableData(data=table.get_data(), data_num=table.get_data_num(), heads=table.get_heads(), layers=table.get_layers(), key=table.get_key(), horizontal_headers=table.get_horizontal_headers(), vertical_headers=table.get_vertical_headers(), horizontal_ids=table.get_horizontal_ids(), vertical_ids=table.get_vertical_ids())
-        self.add_data(data)
+    def data_monitor(self, table_data: AnvnVisualData):
+        self.add_data(table_data)
 
     def add_data(self, data):
         self.__add_data_item(data)

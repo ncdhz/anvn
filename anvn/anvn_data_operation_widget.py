@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from anvn_utils import AnvnUtils
 from anvn_table_management import AnvnTableManagement
 from anvn_config import AnvnConfig
-from anvn_data import AnvnBasicData, AnvnModelOutputData, AnvnTableData
+from anvn_data import AnvnBasicData, AnvnModelOutputData, AnvnVisualData
 class AnvnDODialog(AnvnDialog):
 
     ok_handle = pyqtSignal(object)
@@ -331,14 +331,14 @@ class AnvnLMOWidget(QWidget):
 
 class AnvnMMOWidget(QWidget):
 
-    handle = pyqtSignal(AnvnTableData)
+    handle = pyqtSignal(AnvnVisualData)
 
     def __init__(self, model_output: AnvnModelOutputData):
         super(AnvnMMOWidget, self).__init__()
         self.model_output = model_output
         self.config: AnvnConfig = model_output.get_config()
 
-        self.basic_data = AnvnBasicData(model_tokenizer_names=[model_output.first_model_tokenizer_name()], key=self.config.model_output.attentions)
+        self.basic_data = AnvnBasicData(model_tokenizer_names=[model_output.first_model_tokenizer_name()], key=self.config.model_output.attentions, decimal_digit=self.config.table.decimal_digit)
         
 
         self.main_layout = QVBoxLayout()
@@ -356,6 +356,9 @@ class AnvnMMOWidget(QWidget):
         self.key_but(self.__key_changed_func)
         self.key_but.setCurrentText(self.config.model_output.attentions)
         self.__add_tabel_widget()
+    
+    def get_config(self):
+        return self.config
 
     def __init_data_show(self):
         data_show = QHBoxLayout()
@@ -477,8 +480,7 @@ class AnvnMMOWidget(QWidget):
         if table.is_start() and current_index == 0:
             self.revoke_but.setDisabled(True)
         else:
-            self.revoke_but.setDisabled(False
-            )
+            self.revoke_but.setDisabled(False)
         if table.is_end() and current_index == self.table_main.count() - 1:
             self.forward_but.setDisabled(True)
         else:
@@ -493,7 +495,7 @@ class AnvnMMOWidget(QWidget):
 
     def __update_current_data(self):
         table = self.table_main.currentWidget()
-        self.basic_data = table.get_data().copy()
+        self.basic_data = table.get_basic_data().copy()
         self.__data_choice_changed()
 
     def __forward_func(self):

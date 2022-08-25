@@ -77,6 +77,8 @@ class AnvnDataInputWidget(AnvnDockWidget):
             del self.data_text_list[index]
             for _ in self.data_text_list:
                 self.add_item2list()
+            if len(self.data_text_list) == 0:
+                self.add_item2list()
         return dd
 
     def __get_data(self):

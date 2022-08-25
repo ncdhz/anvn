@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QDockWidget, QPushButton, QComboBox, QBoxLayout, QLi
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QSize, QEvent, pyqtSignal, QRect, QPoint
 from anvn_resources import *
+from anvn_data import AnvnVisualData
 
 class AnvnDockTitleBar(QFrame):
     def __init__(self, title, color='rgb(226, 192, 141)', background=None):
@@ -420,12 +421,20 @@ class AnvnInformationWidget(AnvnFrame):
 
 
 class AnvnTableWidget(QTableWidget):
-    def __init__(self):
+    def __init__(self, data, horizontal_headers, vertical_headers, key):
         super(AnvnTableWidget, self).__init__()
         self.__set_style()
         self.model_ = self.selectionModel()
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
         self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+        self.data = AnvnVisualData(data, horizontal_headers, vertical_headers, key)
+        self.digit = None
+
+    def get_digit(self):
+        return self.digit
+
+    def get_data(self):
+        return self.data
 
     def __set_style(self):
         self.setStyleSheet('''
@@ -488,7 +497,25 @@ class AnvnTableWidget(QTableWidget):
         columns = [c.column() for c in columns]
         return sorted(rows), sorted(columns)
 
-    def data2table(self, data, horizontal_header, vertical_header, digit=5):
+    def data2table(self, data_op=None, horizontal_headers_op=None, vertical_headers_op=None, digit=5):
+        if data_op is not None:
+            self.data.set_data_op(data_op)
+        
+        if horizontal_headers_op is not None:
+            self.data.set_horizontal_headers_op(horizontal_headers_op)
+        
+        if vertical_headers_op is not None:
+            self.data.set_vertical_headers_op(vertical_headers_op)
+
+        if digit != self.digit:
+            self.digit = digit
+        elif data_op is None and horizontal_headers_op is None and vertical_headers_op is None:
+            return
+        
+        vertical_header = self.data.get_vertical_header()
+        horizontal_header = self.data.get_horizontal_header()
+        data = self.data.get_data()
+
         self.clear()
         self.setRowCount(len(vertical_header))
         self.setColumnCount(len(horizontal_header))

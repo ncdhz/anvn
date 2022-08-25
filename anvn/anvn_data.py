@@ -2,7 +2,7 @@ from anvn_config import AnvnConfig
 from anvn_utils import AnvnUtils
 class AnvnBasicData:
     
-    def __init__(self, model_tokenizer_names=None, model_tokenizer_key=None, data_num=[0], heads=None, layers=None, key=None, decimal_digit=5, basic_data=None) -> None:
+    def __init__(self, model_tokenizer_names=None, data_num=[0], heads=None, layers=None, key=None, decimal_digit=5, basic_data=None) -> None:
         
         if basic_data is not None:
             self.model_tokenizer_names = basic_data.model_tokenizer_names.copy()
@@ -78,6 +78,51 @@ class AnvnBasicData:
     def get_model_tokenizer_names(self):
         return self.model_tokenizer_names
 
+class AnvnVisualData:
+    def __init__(self, data, horizontal_headers, vertical_headers, key=None):
+        self.data = data
+        self.horizontal_headers = horizontal_headers
+        self.vertical_headers = vertical_headers
+        self.data_op = None
+        self.horizontal_headers_op = None
+        self.vertical_headers_op = None
+        self.key = key
+    
+    def set_data_op(self, data_op):
+        self.data_op = data_op
+    
+    def set_horizontal_headers_op(self, horizontal_headers_op):
+        self.horizontal_headers_op = horizontal_headers_op
+    
+    def set_vertical_headers_op(self, vertical_headers_op):
+        self.vertical_headers_op = vertical_headers_op
+
+    def get_data(self, data_op=None):
+        if data_op is None:
+            data_op = self.data_op
+        return self.__op(self.data, data_op)
+    
+    def __op(self, d, op):
+        for o in op:
+            d = d[o]
+        return d
+
+    def set_key(self, key):
+        self.key = key
+    
+    def get_key(self):
+        self.key
+    
+    def get_horizontal_header(self, horizontal_headers_op=None):
+        if horizontal_headers_op is None:
+            horizontal_headers_op = self.horizontal_headers_op
+        return self.__op(self.horizontal_headers, horizontal_headers_op)
+
+    def get_vertical_header(self, vertical_headers_op=None):
+        if vertical_headers_op is None:
+            vertical_headers_op = self.vertical_headers_op
+        return self.__op(self.vertical_headers, vertical_headers_op)
+
 class AnvnTableData(AnvnBasicData):
     def __init__(self, data=None, basic_data: AnvnBasicData=None, horizontal_headers=None, vertical_headers=None, horizontal_ids=None, vertical_ids=None, tokenizers=None, config: AnvnConfig=None):
         super().__init__(basic_data=basic_data)
@@ -92,11 +137,14 @@ class AnvnTableData(AnvnBasicData):
         self.op_index = 0
 
     def get_tokenizer(self, key):
-        return self.tokenizers[key]
+        return self.tokenizers[key[1]]
 
     def set_op_index(self, index):
         self.op_index = index
     
+    def get_op(self):
+        return self.ops[self.op_index]
+
     def get_op_index(self):
         return self.op_index
 
